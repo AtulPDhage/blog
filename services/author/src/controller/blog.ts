@@ -1,6 +1,7 @@
 import { AuthenticatedRequest } from "../middlewares/isAuth.js";
 import { getBuffer } from "../utils/dataUri.js";
 import { sql } from "../utils/db.js";
+import { invalidateCacheJob } from "../utils/rabbitmq.js";
 import TryCatch from "../utils/TryCatch.js";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -24,6 +25,8 @@ export const createBlog = TryCatch(async (req : AuthenticatedRequest, res) => {
     });
 
     const result =  await sql`INSERT INTO blogs (title, description, image, blogcontent, category, author) VALUES (${title}, ${description}, ${cloud.secure_url}, ${blogcontent}, ${category}, ${req.user?._id}) RETURNING *`;
+
+    await invalidateCacheJob(["blogs:*"]);
 
     res.status(201).json({message: "Blog created successfully", blog: result[0]});
 }); 
@@ -57,6 +60,8 @@ export const updateBlog = TryCatch(async (req : AuthenticatedRequest, res) => {
         imageUrl = cloud.secure_url;
     }
     const result =  await sql`UPDATE blogs SET title = ${title || blog[0].title}, description = ${description || blog[0].description}, image = ${imageUrl}, blogcontent = ${blogcontent || blog[0].blogcontent}, category = ${category || blog[0].category} WHERE id = ${id} RETURNING *`;
+    
+    await invalidateCacheJob(["blogs:*", `blog:${id}`]);
 
     res.status(200).json({
         message: "Blog updated successfully",
@@ -78,6 +83,8 @@ export const deleteBlog = TryCatch(async (req : AuthenticatedRequest, res) => {
     await sql`DELETE FROM blogs WHERE id = ${id}`;
     await sql`DELETE FROM comments WHERE blogid = ${id}`;
     await sql`DELETE FROM savedblogs WHERE blogid = ${id}`;
+
+    await invalidateCacheJob(["blogs:*", `blog:${id}`]);
 
     res.status(200).json({message: "Blog deleted successfully"});
 });
