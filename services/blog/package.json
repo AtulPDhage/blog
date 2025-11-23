@@ -1,5 +1,5 @@
 {
-  "name": "user",
+  "name": "blog",
   "version": "1.0.0",
   "main": "server.js",
   "type": "module",
@@ -14,20 +14,16 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@types/cors": "^2.8.19",
+    "@neondatabase/serverless": "^1.0.2",
+    "@types/axios": "^0.9.36",
+    "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.5",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/mongoose": "^5.11.96",
-    "@types/multer": "^2.0.0",
-    "cloudinary": "^2.8.0",
+    "axios": "^1.13.2",
     "concurrently": "^9.2.1",
-    "cors": "^2.8.5",
-    "datauri": "^4.1.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.20.0",
-    "multer": "^2.0.2",
     "typescript": "^5.9.3"
   }
 }
