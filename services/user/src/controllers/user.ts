@@ -5,14 +5,30 @@ import TryCatch from '../utils/TryCatch.js';
 import { AuthenticatedRequest } from '../middleware/isAuth.js';
 import { getBuffer } from '../utils/dataUri.js';
 import { v2 as cloudinary } from 'cloudinary';
+import { oauth2Client } from '../utils/GoogleConfig.js';
+import axios from 'axios';
 
 export const loginUser = TryCatch(async (req , res) => {
-    const {name , email, image} = req.body;
+    
+    const {code} = req.body;
+
+    if(!code) {
+        res.status(400).json({message: "Authorization code is required"});
+        return;
+    }
+
+    const googleRes = await oauth2Client.getToken(code);
+
+    oauth2Client.setCredentials(googleRes.tokens);
+
+    const userRes = await axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${googleRes.tokens.access_token}`);
+
+    const {name , email, picture} = userRes.data;
 
     let user  =  await User.findOne({email});
 
     if(!user) {
-        user  = await User.create({name, email, image});
+        user  = await User.create({name, email, image : picture});
     }
 
     const token = jwt.sign({user}, process.env.JWT_SECRET as string, {expiresIn: '5d'});
