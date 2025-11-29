@@ -18,7 +18,6 @@ const Navbar = () => {
           Postly
         </Link>
 
-        {/* Mobile Menu Toggle */}
         <div className="md:hidden">
           <Button variant={"ghost"} onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -52,7 +51,6 @@ const Navbar = () => {
           )}
         </ul>
       </div>
-      {/* Mobile Menu */}
       <div
         className={cn(
           "md:hidden overflow-hidden transition-all duration-300 ease-in-out",

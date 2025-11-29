@@ -4,7 +4,7 @@ import React, { ReactNode, useContext, useEffect, useState } from "react";
 import { createContext } from "react";
 import Cookies from "js-cookie";
 import axios from "axios";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 export const user_service = "http://localhost:5000";
 export const author_service = "http://localhost:5001";
@@ -39,6 +39,7 @@ interface AppContextType {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setIsAuth: React.Dispatch<React.SetStateAction<boolean>>;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  logoutUser: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -70,13 +71,28 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   }
 
+  async function logoutUser() {
+    Cookies.remove("token");
+    setUser(null);
+    setIsAuth(false);
+    toast.success("user logged out");
+  }
+
   useEffect(() => {
     fetchUser();
   }, []);
 
   return (
     <AppContext.Provider
-      value={{ user, isAuth, loading, setIsAuth, setLoading, setUser }}
+      value={{
+        user,
+        isAuth,
+        loading,
+        setIsAuth,
+        setLoading,
+        setUser,
+        logoutUser,
+      }}
     >
       <GoogleOAuthProvider clientId="720531130636-e9r983didu9ske1smpbol7l6egj1e4im.apps.googleusercontent.com">
         {children}
