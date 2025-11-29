@@ -22,6 +22,7 @@ import { redirect, useRouter } from "next/navigation";
 
 const ProfilePage = () => {
   const { user, setUser, logoutUser } = useAppData();
+  const router = useRouter();
 
   if (!user) {
     return redirect("/login");
@@ -175,7 +176,9 @@ const ProfilePage = () => {
               </div>
               <div className="flex flex-col sm:flex-row gap-2 mt-6 w-full justify-center">
                 <Button onClick={logoutHandler}>Logout</Button>
-                <Button>Add Blog</Button>
+                <Button onClick={() => router.push("/blog/new")}>
+                  Add Blog
+                </Button>
                 <Dialog open={open} onOpenChange={setOpen}>
                   <DialogTrigger asChild>
                     <Button variant={"outline"}>Edit</Button>
