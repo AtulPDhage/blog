@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import React, { useMemo, useRef, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { Car, RefreshCw } from "lucide-react";
 import Cookies from "js-cookie";
 import axios from "axios";
 import {
@@ -89,6 +89,67 @@ const AddBlog = () => {
       setLoading(false);
     }
   };
+
+  const [aiTitle, setAiTitle] = useState(false);
+
+  const aiTitleResponse = async () => {
+    try {
+      setAiTitle(true);
+      const { data }: any = await axios.post(
+        `${author_service}/api/v1/ai/title`,
+        {
+          text: formData.title,
+        }
+      );
+      setFormData({ ...formData, title: data });
+    } catch (err) {
+      toast.error("Problem while fetching ai");
+      console.log(err);
+    } finally {
+      setAiTitle(false);
+    }
+  };
+
+  const [aiDescription, setaiDescription] = useState(false);
+
+  const aiDescriptionResponse = async () => {
+    try {
+      setaiDescription(true);
+      const { data }: any = await axios.post(
+        `${author_service}/api/v1/ai/description`,
+        {
+          title: formData.title,
+          description: formData.description,
+        }
+      );
+      setFormData({ ...formData, description: data });
+    } catch (err) {
+      toast.error("Problem while fetching ai");
+      console.log(err);
+    } finally {
+      setaiDescription(false);
+    }
+  };
+  const [aiBlogLoading, setAiBlogLoading] = useState(false);
+  const aiBlogResponse = async () => {
+    try {
+      setAiBlogLoading(true);
+      const { data }: any = await axios.post(
+        `${author_service}/api/v1/ai/blog`,
+        {
+          blog: formData.blogcontent,
+        }
+      );
+      setContent(data.html);
+      setFormData({ ...formData, blogcontent: data.html });
+    } catch (err) {
+      toast.error("Problem while fetching ai");
+      console.log(err);
+    } finally {
+      setAiBlogLoading(false);
+    }
+  };
+
   const config = useMemo(
     () => ({
       readonly: false, // all options from https://xdsoft.net/jodit/docs/,
@@ -111,11 +172,22 @@ const AddBlog = () => {
                 value={formData.title}
                 onChange={handleInputChange}
                 placeholder="Enter Blog title"
+                className={
+                  aiTitle ? "animate-pulse placeholder:opacity-60" : ""
+                }
                 required
               />
-              <Button type="button">
-                <RefreshCw />
-              </Button>
+              {formData.title === "" ? (
+                ""
+              ) : (
+                <Button
+                  type="button"
+                  onClick={aiTitleResponse}
+                  disabled={aiTitle}
+                >
+                  <RefreshCw className={aiTitle ? "animate-spin" : ""} />
+                </Button>
+              )}
             </div>
             <Label>Description</Label>
             <div className="flex justify-center items-center gap-2">
@@ -125,11 +197,22 @@ const AddBlog = () => {
                 value={formData.description}
                 onChange={handleInputChange}
                 placeholder="Enter Blog description"
+                className={
+                  aiDescription ? "animate-pulse placeholder:opacity-60" : ""
+                }
                 required
               />
-              <Button type="button">
-                <RefreshCw />
-              </Button>
+              {formData.title === "" ? (
+                ""
+              ) : (
+                <Button
+                  type="button"
+                  onClick={aiDescriptionResponse}
+                  disabled={aiDescription}
+                >
+                  <RefreshCw className={aiDescription ? "animate-spin" : ""} />
+                </Button>
+              )}
             </div>
             <Label>Category</Label>
             <Select
@@ -160,8 +243,16 @@ const AddBlog = () => {
                   Paste your blog or type here. You can use rich text
                   formatting. Please add image after improving your grammer
                 </p>
-                <Button type="button" size={"sm"}>
-                  <RefreshCw size={16} />
+                <Button
+                  type="button"
+                  size={"sm"}
+                  onClick={aiBlogResponse}
+                  disabled={aiBlogLoading}
+                >
+                  <RefreshCw
+                    size={16}
+                    className={aiBlogLoading ? "animate-spin" : ""}
+                  />
                   <span>Fix Grammer</span>
                 </Button>
               </div>
