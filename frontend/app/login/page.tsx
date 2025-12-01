@@ -15,7 +15,7 @@ import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
-import Loading from "@/components/ui/loading";
+import Loading from "@/components/loading";
 import { redirect } from "next/navigation";
 const LoginPage = () => {
   const { isAuth, user, setIsAuth, loading, setLoading, setUser } =

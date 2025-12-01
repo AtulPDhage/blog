@@ -40,6 +40,13 @@ interface AppContextType {
   setIsAuth: React.Dispatch<React.SetStateAction<boolean>>;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   logoutUser: () => Promise<void>;
+  blogs: Blog[] | null;
+  blogLoading: boolean;
+  setBlogLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  searchQuery: string;
+  setCategory: React.Dispatch<React.SetStateAction<string>>;
+  category: string;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -52,7 +59,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuth, setIsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
   async function fetchUser() {
+    setLoading(true);
     try {
       const token = Cookies.get("token");
 
@@ -70,6 +81,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       setLoading(false);
     }
   }
+  const [blogLoading, setBlogLoading] = useState(false);
+  const [blogs, setBlogs] = useState<Blog[] | null>(null);
+  async function fetchBlogs() {
+    setBlogLoading(true);
+    try {
+      const { data }: any = await axios.get(
+        `${blog_service}/api/v1/blog/all?searchQuery=${searchQuery}&category=${category}`
+      );
+      setBlogs(data?.blogs);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setBlogLoading(false);
+    }
+  }
 
   async function logoutUser() {
     Cookies.remove("token");
@@ -82,6 +108,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     fetchUser();
   }, []);
 
+  useEffect(() => {
+    fetchBlogs();
+  }, [searchQuery, category]);
+
   return (
     <AppContext.Provider
       value={{
@@ -92,6 +122,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setLoading,
         setUser,
         logoutUser,
+        setBlogLoading,
+        blogLoading,
+        blogs,
+        setSearchQuery,
+        searchQuery,
+        setCategory,
+        category,
       }}
     >
       <GoogleOAuthProvider clientId="720531130636-e9r983didu9ske1smpbol7l6egj1e4im.apps.googleusercontent.com">

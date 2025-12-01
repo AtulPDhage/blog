@@ -38,7 +38,7 @@ export const loginUser = TryCatch(async (req , res) => {
 
 export const myProfile = TryCatch(async (req : AuthenticatedRequest, res) => {
     const user = req.user;
-    res.json({user});
+    res.status(200).json({user});
 });
 
 export const getUserProfile =  TryCatch(async (req , res) => {

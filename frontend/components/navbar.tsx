@@ -3,7 +3,7 @@
 import { CircleUserRound, Ghost, LogIn, Menu, X } from "lucide-react";
 import React, { useState } from "react";
 import Link from "next/link";
-import { Button } from "./button";
+import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { useAppData } from "@/context/AppContext";
 

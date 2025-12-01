@@ -6,7 +6,7 @@ import React, { useRef, useState } from "react";
 import Cookies from "js-cookie";
 import axios from "axios";
 import toast from "react-hot-toast";
-import Loading from "@/components/ui/loading";
+import Loading from "@/components/loading";
 import { Facebook, Instagram, Linkedin, LinkedinIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
