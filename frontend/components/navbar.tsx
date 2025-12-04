@@ -14,7 +14,7 @@ const Navbar = () => {
   return (
     <nav className="bg-white shadow-md p-4 z-50">
       <div className="container mx-auto flex justify-between items-center">
-        <Link href="/" className="text-xl font-bold text-gray-900">
+        <Link href="/blogs" className="text-xl font-bold text-gray-900">
           Postly
         </Link>
 
@@ -59,7 +59,7 @@ const Navbar = () => {
       >
         <ul className="flex flex-col justify-center items-center space-y-4 p-4  text-gray-700 bg-white shadow-md">
           <li>
-            <Link href="/" className="hover:text-blue-500">
+            <Link href="/blogs" className="hover:text-blue-500">
               Home
             </Link>
           </li>
@@ -68,11 +68,21 @@ const Navbar = () => {
               Saved Blogs
             </Link>
           </li>
-          <li>
-            <Link href="/login" className="hover:text-blue-500">
-              <LogIn />
-            </Link>
-          </li>
+          {loading ? (
+            ""
+          ) : (
+            <li>
+              {isAuth ? (
+                <Link href="/profile" className="hover:text-blue-500">
+                  <CircleUserRound />
+                </Link>
+              ) : (
+                <Link href="/login" className="hover:text-blue-500">
+                  <LogIn />
+                </Link>
+              )}
+            </li>
+          )}
         </ul>
       </div>
     </nav>
