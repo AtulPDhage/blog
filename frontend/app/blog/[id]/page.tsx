@@ -33,6 +33,7 @@ const BlogPage = () => {
   const [blog, setBlog] = useState<Blog | null>(null);
   const [author, setAuthor] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
+  const [addCommentLoading, setAddCommentLoading] = useState(false);
 
   interface Comment {
     id: string;
@@ -104,7 +105,7 @@ const BlogPage = () => {
   const [comment, setComment] = useState("");
   async function addComment() {
     try {
-      setLoading(true);
+      setAddCommentLoading(true);
       const token = Cookies.get("token");
       const { data }: any = await axios.post(
         `${blog_service}/api/v1/comment/${id}`,
@@ -121,7 +122,7 @@ const BlogPage = () => {
     } catch (error) {
       toast.error("Problem while adding comment");
     } finally {
-      setLoading(false);
+      setAddCommentLoading(false);
     }
   }
   async function deleteBlog() {
@@ -260,50 +261,61 @@ const BlogPage = () => {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />
-            <Button onClick={addComment} disabled={loading}>
-              {loading ? "Adding Comment..." : "Post Comment"}
+            <Button
+              onClick={addComment}
+              disabled={addCommentLoading}
+              className={`transition-all duration-300 ease-in-out transform 
+              ${
+                comment.length === 0
+                  ? "opacity-0 scale-95"
+                  : "opacity-100 scale-100"
+              }`}
+            >
+              {addCommentLoading ? "Adding Comment..." : "Post Comment"}
             </Button>
           </CardContent>
         </Card>
       )}
-      <Card>
-        <CardHeader>
-          <h3 className="text-lg font-medium">All Comments</h3>
+      <Card className="">
+        <CardHeader className="px-6 pt-6">
+          <h3 className="text-xl font-semibold text-gray-800">All Comments</h3>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="px-6 pb-6 flex flex-col gap-4">
           {comments && comments.length > 0 ? (
-            comments.map((e, i) => {
-              return (
-                <div
-                  key={i}
-                  className="border-b mb-4 p-3  rounded-2xl border-black flex items-center "
-                >
-                  <div>
-                    <p className="font-semibold flex items-center gap-1">
-                      <span className="user border border-gray-400 rounded-full p-1">
-                        <User2 />
-                      </span>
-                      {e?.username}
-                    </p>
-                    <p className="break-all">{e.comment}</p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(e.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                  {e.userid === user?._id && (
-                    <Button
-                      variant={"destructive"}
-                      onClick={() => deleteComment(e.id)}
-                      disabled={loading}
-                    >
-                      <Trash2 />
-                    </Button>
-                  )}
+            comments.map((e, i) => (
+              <div
+                key={i}
+                className="flex items-start justify-between gap-4 p-4 bg-white rounded-2xl shadow-sm border border-gray-200 
+             transition-all duration-200 hover:shadow-md hover:-translate-y-1 hover:bg-gray-100"
+              >
+                <div className="flex flex-col gap-1 w-full">
+                  <p className="font-semibold flex items-center gap-2 text-gray-700">
+                    <span className="user border border-gray-300 rounded-full p-1 flex items-center justify-center">
+                      <User2 className="w-4 h-4 text-gray-600" />
+                    </span>
+                    {e?.username}
+                  </p>
+                  <p className="break-words text-gray-800">{e.comment}</p>
+                  <p className="text-xs text-gray-400">
+                    {new Date(e.created_at).toLocaleString()}
+                  </p>
                 </div>
-              );
-            })
+
+                {e.userid === user?._id && (
+                  <Button
+                    variant={"destructive"}
+                    onClick={() => deleteComment(e.id)}
+                    disabled={loading}
+                    className="ml-2 h-8 w-8 p-0 flex items-center justify-center"
+                  >
+                    <Trash2 className="w-4 h-4 hover:bg-amber-300" />
+                  </Button>
+                )}
+              </div>
+            ))
           ) : (
-            <p>No Comments yet</p>
+            <p className="text-gray-500 text-center py-4">No Comments yet</p>
           )}
         </CardContent>
       </Card>

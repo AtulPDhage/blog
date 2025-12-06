@@ -10,7 +10,6 @@ import React from "react";
 const Blogs = () => {
   const { loading, blogLoading, blogs } = useAppData();
   const { toggleSidebar } = useSidebar();
-  console.log("BLOGS TYPE:", blogs, Array.isArray(blogs));
   return (
     <div>
       {loading ? (

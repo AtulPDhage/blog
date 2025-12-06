@@ -27,8 +27,17 @@ import { useParams, useRouter } from "next/navigation";
 const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
 
 const EditBlogPage = () => {
-  const editor = useRef(null);
   const router = useRouter();
+  const { loading : contexLoader, isAuth, blogs, savedBlogs } = useAppData();
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!contexLoader && !isAuth) {
+      router.replace("/login");
+    }
+  }, [contexLoader, isAuth]);
+  
+  const editor = useRef(null);
   const { fetchBlogs } = useAppData();
   const { id } = useParams();
   const [content, setContent] = useState("");

@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleUserRound, Ghost, LogIn, Menu, X } from "lucide-react";
+import { CircleUserRound, Ghost, LogIn, LogOut, Menu, X } from "lucide-react";
 import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "./ui/button";
@@ -9,8 +9,10 @@ import { useAppData } from "@/context/AppContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { loading, isAuth } = useAppData();
-
+  const { loading, isAuth, logoutUser } = useAppData();
+  function logouthandler() {
+    logoutUser();
+  }
   return (
     <nav className="bg-white shadow-md p-4 z-50">
       <div className="container mx-auto flex justify-between items-center">
@@ -29,19 +31,32 @@ const Navbar = () => {
               Home
             </Link>
           </li>
-          <li>
-            <Link href="/blogs/saved" className="hover:text-blue-500">
-              Saved Blogs
-            </Link>
-          </li>
+          {isAuth && (
+            <li>
+              <Link href="/blog/saved" className="hover:text-blue-500">
+                Saved Blogs
+              </Link>
+            </li>
+          )}
+          {isAuth && (
+            <li>
+              <Link href="/profile" className="hover:text-blue-500">
+                <CircleUserRound />
+              </Link>
+            </li>
+          )}
           {loading ? (
             ""
           ) : (
             <li>
               {isAuth ? (
-                <Link href="/profile" className="hover:text-blue-500">
-                  <CircleUserRound />
-                </Link>
+                <Button
+                  onClick={logouthandler}
+                  className="flex gap-2 items-center"
+                >
+                  <LogOut />
+                  Logout
+                </Button>
               ) : (
                 <Link href="/login" className="hover:text-blue-500">
                   <LogIn />
@@ -63,19 +78,25 @@ const Navbar = () => {
               Home
             </Link>
           </li>
-          <li>
-            <Link href="/blogs/saved" className="hover:text-blue-500">
-              Saved Blogs
-            </Link>
-          </li>
+          {isAuth && (
+            <li>
+              <Link href="/blog/saved" className="hover:text-blue-500">
+                Saved Blogs
+              </Link>
+            </li>
+          )}
           {loading ? (
             ""
           ) : (
             <li>
               {isAuth ? (
-                <Link href="/profile" className="hover:text-blue-500">
-                  <CircleUserRound />
-                </Link>
+                <Button
+                  onClick={logouthandler}
+                  className="flex gap-2 items-center"
+                >
+                  <LogOut />
+                  Logout
+                </Button>
               ) : (
                 <Link href="/login" className="hover:text-blue-500">
                   <LogIn />

@@ -1,14 +1,7 @@
 "use client";
+
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAppData, user_service } from "@/context/AppContext";
-import React, { useRef, useState } from "react";
-import Cookies from "js-cookie";
-import axios from "axios";
-import toast from "react-hot-toast";
-import Loading from "@/components/loading";
-import { Facebook, Instagram, Linkedin, LinkedinIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -16,246 +9,247 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { redirect, useRouter } from "next/navigation";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Facebook, Instagram, Linkedin } from "lucide-react";
+
+import React, { useState, useRef, useEffect } from "react";
+import axios from "axios";
+import Cookies from "js-cookie";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import Loading from "@/components/loading";
+
+import { useAppData, user_service } from "@/context/AppContext";
 
 const ProfilePage = () => {
-  const { user, setUser, logoutUser } = useAppData();
+  const { user, setUser, isAuth, loading } = useAppData();
   const router = useRouter();
 
-  if (!user) {
-    return redirect("/login");
-  }
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!loading && !isAuth) {
+      router.replace("/login");
+    }
+  }, [loading, isAuth]);
 
-  const logoutHandler = () => {
-    logoutUser();
-  };
-  const InputRef = useRef<HTMLInputElement>(null);
-  const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
-  const route = useRouter();
   const [formData, setFormData] = useState({
-    name: user?.name || "",
-    bio: user?.bio || "",
-    facebook: user?.facebook || "",
-    instagram: user?.instagram || "",
-    linkedin: user?.linkedin || "",
+    name: "",
+    bio: "",
+    instagram: "",
+    facebook: "",
+    linkedin: "",
   });
 
-  const clickHandler = () => {
-    InputRef.current?.click();
-  };
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [localLoading, setLocalLoading] = useState(false);
 
-  const changeHandler = async (e: any) => {
+  // 🟢 Sync formData automatically once the user loads
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || "",
+        bio: user.bio || "",
+        instagram: user.instagram || "",
+        facebook: user.facebook || "",
+        linkedin: user.linkedin || "",
+      });
+    }
+  }, [user]);
+
+  const handleImageUpload = async (e: any) => {
     const file = e.target.files[0];
 
-    if (file) {
-      const formData = new FormData();
-      formData.append("file", file);
+    if (!file) return;
 
-      try {
-        setLoading(true);
-        const token = Cookies.get("token");
-        const { data }: any = await axios.post(
-          `${user_service}/api/v1/user/update/pic`,
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+    const fd = new FormData();
+    fd.append("file", file);
 
-        toast.success(data.message);
-        setLoading(false);
-        Cookies.set("token", data.token, {
-          expires: 5,
-          secure: true,
-          path: "/",
-        });
+    try {
+      setLocalLoading(true);
 
-        setUser(data.user);
-      } catch (err) {
-        toast.error("Image Update failed");
-        setLoading(false);
-      }
+      const token = Cookies.get("token");
+      const { data }: any = await axios.post(
+        `${user_service}/api/v1/user/update/pic`,
+        fd,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      toast.success(data.message);
+      Cookies.set("token", data.token);
+      setUser(data.user);
+    } catch (err) {
+      toast.error("Image upload failed");
+    } finally {
+      setLocalLoading(false);
     }
   };
-  const handleFormSubmit = async () => {
+
+  const handleSave = async () => {
     try {
-      setLoading(true);
+      setLocalLoading(true);
+
       const token = Cookies.get("token");
       const { data }: any = await axios.post(
         `${user_service}/api/v1/user/update`,
         formData,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-      toast.success(data.message);
-      setLoading(false);
-      Cookies.set("token", data.token, {
-        expires: 5,
-        secure: true,
-        path: "/",
-      });
 
+      toast.success("Profile updated");
+      Cookies.set("token", data.token);
       setUser(data.user);
       setOpen(false);
-    } catch (error) {
-      toast.error("Profile Update failed");
-      setLoading(false);
+    } catch (err) {
+      toast.error("Update failed");
+    } finally {
+      setLocalLoading(false);
     }
   };
 
+  if (loading || localLoading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loading />
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
-      {loading ? (
-        <Loading />
-      ) : (
-        <Card className="w-full max-w-xl shadow-lg border rounded-2xl p-6">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-semibold">Profile</CardTitle>
-            <CardContent className="flex flex-col items-center space-y-4">
-              <Avatar
-                className="w-28 h-28 border-4 border-gray-200 shadow-md cursor-pointer"
-                onClick={clickHandler}
-              >
-                <AvatarImage src={user?.image} alt="profile pic" />
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/"
-                  ref={InputRef}
-                  onChange={changeHandler}
-                />
-              </Avatar>
-              <div className="w-full space-y-2 text-center">
-                <label className="font-medium">Name</label>
-                <p>{user?.name}</p>
-              </div>
+      <Card className="w-full max-w-xl shadow-lg border rounded-2xl p-6">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-semibold">Profile</CardTitle>
+        </CardHeader>
 
-              {user?.bio && (
-                <div className="w-full space-y-2 text-center">
-                  <label className="font-medium">Bio</label>
-                  <p>{user.bio}</p>
+        <CardContent className="flex flex-col items-center space-y-4">
+          {/* Avatar */}
+          <Avatar
+            className="w-28 h-28 border-4 border-gray-200 shadow-md cursor-pointer"
+            onClick={() => inputRef.current?.click()}
+          >
+            <AvatarImage src={user.image} alt="profile" />
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              ref={inputRef}
+              onChange={handleImageUpload}
+            />
+          </Avatar>
+
+          {/* Name */}
+          <div className="text-center">
+            <p className="font-medium text-lg">{user.name}</p>
+          </div>
+
+          {/* Bio */}
+          {user.bio && (
+            <div className="text-center">
+              <p>{user.bio}</p>
+            </div>
+          )}
+
+          {/* Social Links */}
+          <div className="flex gap-4 mt-2">
+            {user.instagram && (
+              <a href={user.instagram} target="_blank">
+                <Instagram className="text-pink-500" />
+              </a>
+            )}
+            {user.facebook && (
+              <a href={user.facebook} target="_blank">
+                <Facebook className="text-blue-500" />
+              </a>
+            )}
+            {user.linkedin && (
+              <a href={user.linkedin} target="_blank">
+                <Linkedin className="text-blue-700" />
+              </a>
+            )}
+          </div>
+
+          {/* Buttons */}
+          <div className="flex flex-col sm:flex-row gap-2 mt-6">
+            <Button onClick={() => router.push("/blog/new")}>Add Blog</Button>
+
+            {/* Edit Modal */}
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">Edit</Button>
+              </DialogTrigger>
+
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Profile</DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-3 mt-2">
+                  <div>
+                    <Label>Name</Label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Bio</Label>
+                    <Input
+                      value={formData.bio}
+                      onChange={(e) =>
+                        setFormData({ ...formData, bio: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Instagram</Label>
+                    <Input
+                      value={formData.instagram}
+                      onChange={(e) =>
+                        setFormData({ ...formData, instagram: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Facebook</Label>
+                    <Input
+                      value={formData.facebook}
+                      onChange={(e) =>
+                        setFormData({ ...formData, facebook: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>LinkedIn</Label>
+                    <Input
+                      value={formData.linkedin}
+                      onChange={(e) =>
+                        setFormData({ ...formData, linkedin: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <Button className="w-full mt-4" onClick={handleSave}>
+                    Save Changes
+                  </Button>
                 </div>
-              )}
-
-              <div className="flex gap-4 mt-3">
-                {user?.instagram && (
-                  <a
-                    href={user.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Instagram className="text-pink-500 text-2xl" />
-                  </a>
-                )}
-                {user?.facebook && (
-                  <a
-                    href={user.facebook}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Facebook className="text-blue-500 text-2xl" />
-                  </a>
-                )}
-                {user?.linkedin && (
-                  <a
-                    href={user.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Linkedin className="text-blue-700 text-2xl" />
-                  </a>
-                )}
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2 mt-6 w-full justify-center">
-                <Button onClick={logoutHandler}>Logout</Button>
-                <Button onClick={() => router.push("/blog/new")}>
-                  Add Blog
-                </Button>
-                <Dialog open={open} onOpenChange={setOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant={"outline"}>Edit</Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w[500px]">
-                    <DialogHeader>
-                      <DialogTitle>Edit Profile</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-3">
-                      <div>
-                        <Label>Name</Label>
-                        <Input
-                          value={formData.name}
-                          onChange={(e) => {
-                            setFormData({ ...formData, name: e.target.value });
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <Label>Bio</Label>
-                        <Input
-                          value={formData.bio}
-                          onChange={(e) => {
-                            setFormData({ ...formData, bio: e.target.value });
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <Label>instagram</Label>
-                        <Input
-                          value={formData.instagram}
-                          onChange={(e) => {
-                            setFormData({
-                              ...formData,
-                              instagram: e.target.value,
-                            });
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <Label>facebook</Label>
-                        <Input
-                          value={formData.facebook}
-                          onChange={(e) => {
-                            setFormData({
-                              ...formData,
-                              facebook: e.target.value,
-                            });
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <Label>linkedin</Label>
-                        <Input
-                          value={formData.linkedin}
-                          onChange={(e) => {
-                            setFormData({
-                              ...formData,
-                              linkedin: e.target.value,
-                            });
-                          }}
-                        />
-                      </div>
-                      <Button
-                        onClick={handleFormSubmit}
-                        className="w-full mt-4"
-                      >
-                        Save Changes
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardContent>
-          </CardHeader>
-        </Card>
-      )}
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

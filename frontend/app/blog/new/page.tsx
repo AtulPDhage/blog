@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Car, RefreshCw } from "lucide-react";
 import Cookies from "js-cookie";
 import axios from "axios";
@@ -17,6 +17,7 @@ import {
 import dynamic from "next/dynamic";
 import { author_service, useAppData } from "@/context/AppContext";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
 export const blogCategories = [
   "Technology",
@@ -29,7 +30,7 @@ export const blogCategories = [
 ];
 const AddBlog = () => {
   const editor = useRef(null);
-  const { fetchBlogs } = useAppData();
+  const { fetchBlogs, isAuth } = useAppData();
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -39,6 +40,15 @@ const AddBlog = () => {
     image: "",
     blogcontent: "",
   });
+
+  const router = useRouter();
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!loading && !isAuth) {
+      router.replace("/login");
+    }
+  }, [loading, isAuth]);
 
   const handleInputChange = (e: any) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -84,7 +94,7 @@ const AddBlog = () => {
       });
       setContent("");
       setTimeout(() => {
-        fetchBlogs(); 
+        fetchBlogs();
       }, 4000);
     } catch (error) {
       console.log(error);

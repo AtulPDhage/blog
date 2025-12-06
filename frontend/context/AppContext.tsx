@@ -6,6 +6,8 @@ import Cookies from "js-cookie";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { usePathname } from "next/navigation";
+
 export const user_service = "http://localhost:5000";
 export const author_service = "http://localhost:5001";
 export const blog_service = "http://localhost:5002";
@@ -82,7 +84,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         },
       });
 
-      setUser(data);
+      setUser(data.user);
       setIsAuth(true);
       setLoading(false);
     } catch (err) {
@@ -111,7 +113,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const token = Cookies.get("token");
     try {
       const { data }: any = await axios.get(
-        `${blog_service}/api/v1/blog/saved/all`,
+        `${blog_service}/api/v1/blogs/saved/all`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -124,6 +126,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   }
 
+  const pathname = usePathname();
+  useEffect(() => {
+    if (pathname === "/blog/saved") {
+      getSavedBlogs();
+    }
+  }, [pathname]);
+
   async function logoutUser() {
     Cookies.remove("token");
     setUser(null);
@@ -132,8 +141,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }
 
   useEffect(() => {
-    fetchUser();
-    getSavedBlogs();
+    const token = Cookies.get("token");
+
+    if (token) {
+      fetchUser().finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
