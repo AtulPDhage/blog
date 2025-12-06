@@ -1,13 +1,26 @@
 "use client";
 import Loading from "@/components/loading";
-import { Blog, blog_service, useAppData, User } from "@/context/AppContext";
+import {
+  author_service,
+  Blog,
+  blog_service,
+  useAppData,
+  User,
+} from "@/context/AppContext";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Bookmark, Edit, Trash2, User2, Users } from "lucide-react";
+import {
+  Bookmark,
+  BookmarkCheck,
+  Edit,
+  Trash2,
+  User2,
+  Users,
+} from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import Cookies from "js-cookie";
@@ -15,7 +28,7 @@ import toast from "react-hot-toast";
 
 const BlogPage = () => {
   const router = useRouter();
-  const { isAuth, user } = useAppData();
+  const { isAuth, user, fetchBlogs, savedBlogs, getSavedBlogs } = useAppData();
   const { id } = useParams();
   const [blog, setBlog] = useState<Blog | null>(null);
   const [author, setAuthor] = useState<User | null>(null);
@@ -111,7 +124,62 @@ const BlogPage = () => {
       setLoading(false);
     }
   }
+  async function deleteBlog() {
+    if (confirm("Are you sure , you want to delete the blog")) {
+      try {
+        setLoading(true);
+        const token = Cookies.get("token");
+        const { data }: any = await axios.delete(
+          `${author_service}/api/v1/blog/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        toast.success(data.message);
+        router.push("/blogs");
+        setTimeout(() => {
+          fetchBlogs();
+        }, 4000);
+      } catch (error) {
+        toast.error("Problem while deleting comment");
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
 
+  const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    if (savedBlogs && savedBlogs.some((b) => b.blogid === id)) {
+      setSaved(true);
+    } else {
+      setSaved(false);
+    }
+  }, [savedBlogs, id]);
+
+  async function saveBlog() {
+    const token = Cookies.get("token");
+    try {
+      setLoading(true);
+      const { data }: any = await axios.post(
+        `${blog_service}/api/v1/save/${id}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      toast.success(data.message);
+      setSaved(!saved);
+    } catch (error) {
+      toast.error("Problem while saving blog");
+    } finally {
+      setLoading(false);
+    }
+  }
   if (!blog) {
     return <Loading />;
   }
@@ -133,8 +201,14 @@ const BlogPage = () => {
               {author?.name}
             </Link>
             {isAuth && (
-              <Button variant={"ghost"} className="mx-3" size={"lg"}>
-                <Bookmark />
+              <Button
+                variant={"ghost"}
+                className="mx-3"
+                size={"lg"}
+                disabled={loading}
+                onClick={saveBlog}
+              >
+                {saved ? <BookmarkCheck color="#40d317" /> : <Bookmark />}
               </Button>
             )}
             {blog.author === user?._id && (
@@ -145,8 +219,14 @@ const BlogPage = () => {
                 >
                   <Edit />
                 </Button>
-                <Button variant={"destructive"} className="mx-2" size={"sm"}>
-                  <Edit />
+                <Button
+                  variant={"destructive"}
+                  className="mx-2"
+                  size={"sm"}
+                  onClick={deleteBlog}
+                  disabled={loading}
+                >
+                  <Trash2 />
                 </Button>
               </>
             )}

@@ -32,6 +32,12 @@ export interface Blog {
   created_at: string;
 }
 
+interface SavedBlogType {
+  id: string;
+  userid: string;
+  blogid: string;
+  created_at: string;
+}
 interface AppContextType {
   user: User | null;
   loading: boolean;
@@ -48,6 +54,8 @@ interface AppContextType {
   setCategory: React.Dispatch<React.SetStateAction<string>>;
   category: string;
   fetchBlogs: () => Promise<void>;
+  savedBlogs: SavedBlogType[] | null;
+  getSavedBlogs: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -98,6 +106,24 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   }
 
+  const [savedBlogs, setSavedBlogs] = useState<SavedBlogType[] | null>(null);
+  async function getSavedBlogs() {
+    const token = Cookies.get("token");
+    try {
+      const { data }: any = await axios.get(
+        `${blog_service}/api/v1/blog/saved/all`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setSavedBlogs(data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   async function logoutUser() {
     Cookies.remove("token");
     setUser(null);
@@ -107,6 +133,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   useEffect(() => {
     fetchUser();
+    getSavedBlogs();
   }, []);
 
   useEffect(() => {
@@ -131,6 +158,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setCategory,
         category,
         fetchBlogs,
+        savedBlogs,
+        getSavedBlogs,
       }}
     >
       <GoogleOAuthProvider clientId="720531130636-e9r983didu9ske1smpbol7l6egj1e4im.apps.googleusercontent.com">
