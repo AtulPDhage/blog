@@ -8,9 +8,9 @@ import toast, { Toaster } from "react-hot-toast";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { usePathname } from "next/navigation";
 
-export const user_service = "http://localhost:5000";
-export const author_service = "http://localhost:5001";
-export const blog_service = "http://localhost:5002";
+export const user_service = "https://user-service-6ffj.onrender.com";
+export const author_service = "https://author-service-fjdq.onrender.com";
+export const blog_service = "https://blog-service-agq0.onrender.com";
 
 export interface User {
   _id: string;
