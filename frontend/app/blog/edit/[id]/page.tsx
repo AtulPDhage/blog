@@ -19,16 +19,16 @@ import {
   author_service,
   blog_service,
   useAppData,
+  blogCategories,
   user_service,
 } from "@/context/AppContext";
 import toast from "react-hot-toast";
-import { blogCategories } from "../../new/page";
 import { useParams, useRouter } from "next/navigation";
 const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
 
 const EditBlogPage = () => {
   const router = useRouter();
-  const { loading : contexLoader, isAuth, blogs, savedBlogs } = useAppData();
+  const { loading: contexLoader, isAuth, blogs, savedBlogs } = useAppData();
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -36,7 +36,7 @@ const EditBlogPage = () => {
       router.replace("/login");
     }
   }, [contexLoader, isAuth]);
-  
+
   const editor = useRef(null);
   const { fetchBlogs } = useAppData();
   const { id } = useParams();

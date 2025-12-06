@@ -15,19 +15,15 @@ import {
   Select,
 } from "@/components/ui/select";
 import dynamic from "next/dynamic";
-import { author_service, useAppData } from "@/context/AppContext";
+import {
+  author_service,
+  blogCategories,
+  useAppData,
+} from "@/context/AppContext";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
-export const blogCategories = [
-  "Technology",
-  "Health",
-  "Entertainment",
-  "Finance",
-  "Travel",
-  "Education",
-  "Study",
-];
+
 const AddBlog = () => {
   const editor = useRef(null);
   const { fetchBlogs, isAuth } = useAppData();

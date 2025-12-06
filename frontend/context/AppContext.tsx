@@ -12,6 +12,16 @@ export const user_service = "https://user-service-6ffj.onrender.com";
 export const author_service = "https://author-service-fjdq.onrender.com";
 export const blog_service = "https://blog-service-agq0.onrender.com";
 
+export const blogCategories = [
+  "Technology",
+  "Health",
+  "Entertainment",
+  "Finance",
+  "Travel",
+  "Education",
+  "Study",
+];
+
 export interface User {
   _id: string;
   name: string;
