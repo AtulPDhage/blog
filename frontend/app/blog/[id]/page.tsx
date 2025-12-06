@@ -7,9 +7,11 @@ import axios from "axios";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Bookmark, Edit } from "lucide-react";
+import { Bookmark, Edit, Trash2, User2, Users } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import Cookies from "js-cookie";
+import toast from "react-hot-toast";
 
 const BlogPage = () => {
   const router = useRouter();
@@ -19,6 +21,13 @@ const BlogPage = () => {
   const [author, setAuthor] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
 
+  interface Comment {
+    id: string;
+    userid: string;
+    comment: string;
+    created_at: string;
+    username: string;
+  }
   async function fetchSingleBlog() {
     try {
       setLoading(true);
@@ -37,6 +46,71 @@ const BlogPage = () => {
   useEffect(() => {
     fetchSingleBlog();
   }, [id]);
+
+  const deleteComment = async (id: string) => {
+    if (confirm("Are you sure , you want to delete the comment")) {
+      try {
+        setLoading(true);
+        const token = Cookies.get("token");
+        const { data }: any = await axios.delete(
+          `${blog_service}/api/v1/comment/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        toast.success(data.message);
+        fetchComments();
+      } catch (error) {
+        toast.error("Problem while deleting comment");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+  const [comments, setComments] = useState<Comment[]>([]);
+  async function fetchComments() {
+    try {
+      setLoading(true);
+      const { data }: any = await axios.get(
+        `${blog_service}/api/v1/comment/${id}`
+      );
+      setComments(data);
+    } catch (error) {
+      toast.error("Problem while adding comment");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchComments();
+  }, [id]);
+
+  const [comment, setComment] = useState("");
+  async function addComment() {
+    try {
+      setLoading(true);
+      const token = Cookies.get("token");
+      const { data }: any = await axios.post(
+        `${blog_service}/api/v1/comment/${id}`,
+        { comment },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      toast.success(data.message);
+      setComment("");
+      fetchComments();
+    } catch (error) {
+      toast.error("Problem while adding comment");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   if (!blog) {
     return <Loading />;
@@ -103,11 +177,56 @@ const BlogPage = () => {
               id="comment"
               placeholder="Type your comment here..."
               className="my-2"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
             />
-            <Button>Post Comment</Button>
+            <Button onClick={addComment} disabled={loading}>
+              {loading ? "Adding Comment..." : "Post Comment"}
+            </Button>
           </CardContent>
         </Card>
       )}
+      <Card>
+        <CardHeader>
+          <h3 className="text-lg font-medium">All Comments</h3>
+        </CardHeader>
+        <CardContent>
+          {comments && comments.length > 0 ? (
+            comments.map((e, i) => {
+              return (
+                <div
+                  key={i}
+                  className="border-b mb-4 p-3  rounded-2xl border-black flex items-center "
+                >
+                  <div>
+                    <p className="font-semibold flex items-center gap-1">
+                      <span className="user border border-gray-400 rounded-full p-1">
+                        <User2 />
+                      </span>
+                      {e?.username}
+                    </p>
+                    <p className="break-all">{e.comment}</p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(e.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                  {e.userid === user?._id && (
+                    <Button
+                      variant={"destructive"}
+                      onClick={() => deleteComment(e.id)}
+                      disabled={loading}
+                    >
+                      <Trash2 />
+                    </Button>
+                  )}
+                </div>
+              );
+            })
+          ) : (
+            <p>No Comments yet</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
