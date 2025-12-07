@@ -85,6 +85,13 @@ const Navbar = () => {
               </Link>
             </li>
           )}
+          {isAuth && (
+            <li>
+              <Link href="/profile" className="hover:text-blue-500">
+                <CircleUserRound />
+              </Link>
+            </li>
+          )}
           {loading ? (
             ""
           ) : (
