@@ -296,7 +296,7 @@ const BlogPage = () => {
                     </span>
                     {e?.username}
                   </p>
-                  <p className="break-words text-gray-800">{e.comment}</p>
+                  <p className="wrap-word-break text-gray-800">{e.comment}</p>
                   <p className="text-xs text-gray-400">
                     {new Date(e.created_at).toLocaleString()}
                   </p>
