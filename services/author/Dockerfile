@@ -1,25 +1,32 @@
-FROM node:22-alpine as builder
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
+# Copy dependency definitions
+COPY go.mod go.sum ./
 
-RUN npm install 
+# Download dependencies
+RUN go mod download
 
-COPY tsconfig.json ./
+# Copy source code layouts
+COPY cmd/ ./cmd/
+COPY internal/ ./internal/
 
-COPY src ./src
+# Build optimized, statically-linked binary from cmd entrypoint
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o author-service ./cmd/server/main.go
 
-RUN npm run build 
-
-FROM node:22-alpine
+# Production runner image
+FROM alpine:3.19
 
 WORKDIR /app
 
-COPY package*.json ./
+# Add non-root application user for secure running
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
 
-RUN npm install  --only=production
+# Copy built binary
+COPY --from=builder /app/author-service .
 
-COPY --from=builder /app/dist ./dist
+EXPOSE 5000
 
-CMD [ "node", "dist/server.js" ]
+CMD ["./author-service"]
