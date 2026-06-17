@@ -1,0 +1,199 @@
+# ──────────────────────────────────────────────────────────────
+# CI/CD — Frontend (Quasar/Vue SPA)
+# Triggers on changes to frontend/** on main branch or PR
+# Pipeline: Lint → Type Check → Build → Docker Push (ECR) → Deploy (EC2)
+# ──────────────────────────────────────────────────────────────
+
+name: CI/CD — Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "frontend/**"
+  workflow_dispatch:
+
+env:
+  SERVICE_NAME: frontend
+  SERVICE_DIR: frontend
+  ECR_REPOSITORY: blog-platform/frontend
+  NODE_VERSION: "22"
+
+# Prevent concurrent deploys for the frontend
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Lint ────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.SERVICE_DIR }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ env.SERVICE_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint check
+        run: npm run lint:check
+
+  # ── Type Check ──────────────────────────────────
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    needs: lint
+    defaults:
+      run:
+        working-directory: ${{ env.SERVICE_DIR }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ env.SERVICE_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type check
+        run: npm run typecheck
+
+  # ── Build ───────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: typecheck
+    defaults:
+      run:
+        working-directory: ${{ env.SERVICE_DIR }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ env.SERVICE_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build SPA
+        run: npm run build
+        env:
+          VITE_USER_SERVICE: ${{ secrets.VITE_USER_SERVICE }}
+          VITE_AUTHOR_SERVICE: ${{ secrets.VITE_AUTHOR_SERVICE }}
+          VITE_BLOG_SERVICE: ${{ secrets.VITE_BLOG_SERVICE }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: spa-build
+          path: ${{ env.SERVICE_DIR }}/dist/spa
+          retention-days: 1
+
+  # ── Docker Build & Push to ECR ──────────────────
+  docker:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    outputs:
+      image_tag: ${{ steps.meta.outputs.sha_tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image metadata
+        id: meta
+        run: |
+          ECR_REGISTRY="${{ steps.ecr-login.outputs.registry }}"
+          SHA_TAG="${ECR_REGISTRY}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}"
+          LATEST_TAG="${ECR_REGISTRY}/${{ env.ECR_REPOSITORY }}:latest"
+          echo "sha_tag=${SHA_TAG}" >> "$GITHUB_OUTPUT"
+          echo "latest_tag=${LATEST_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.SERVICE_DIR }}
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.sha_tag }}
+            ${{ steps.meta.outputs.latest_tag }}
+          build-args: |
+            VITE_USER_SERVICE=${{ secrets.VITE_USER_SERVICE }}
+            VITE_AUTHOR_SERVICE=${{ secrets.VITE_AUTHOR_SERVICE }}
+            VITE_BLOG_SERVICE=${{ secrets.VITE_BLOG_SERVICE }}
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+
+  # ── Deploy to EC2 ──────────────────────────────
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Login to ECR
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+              docker login --username AWS --password-stdin \
+              ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+            # Navigate to project directory
+            cd ~/blog-platform
+
+            # Pull the latest image for the frontend
+            docker compose -f docker-compose.prod.yml pull ${{ env.SERVICE_NAME }}
+
+            # Restart only the frontend (zero-downtime with health checks)
+            docker compose -f docker-compose.prod.yml up -d ${{ env.SERVICE_NAME }}
+
+            # Clean up old images
+            docker image prune -f
+
+            echo "✅ Frontend deployed successfully (commit: ${{ github.sha }})"
