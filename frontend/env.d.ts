@@ -12,7 +12,12 @@
  *   readonly MY_OTHER_VAR: string;
  * }
  */
-interface ImportMetaEnv {}
+interface ImportMetaEnv {
+  readonly VITE_USER_SERVICE: string;
+  readonly VITE_AUTHOR_SERVICE: string;
+  readonly VITE_BLOG_SERVICE: string;
+  readonly VITE_GOOGLE_CLIENT_ID: string;
+}
 
 declare module 'quasar/wrappers' {
   import { BootCallback } from 'quasar';

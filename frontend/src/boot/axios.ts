@@ -11,9 +11,9 @@ declare module 'vue' {
 }
 
 // Microservice base URLs
-export const user_service = 'https://user-service-6ffj.onrender.com';
-export const author_service = 'https://author-service-fjdq.onrender.com';
-export const blog_service = 'https://blog-service-agq0.onrender.com';
+export const user_service = import.meta.env.VITE_USER_SERVICE;
+export const author_service = import.meta.env.VITE_AUTHOR_SERVICE;
+export const blog_service = import.meta.env.VITE_BLOG_SERVICE;
 
 const api = axios.create();
 

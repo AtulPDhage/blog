@@ -222,8 +222,8 @@ async function fetchBlogDetails() {
   loading.value = true;
   try {
     const { data } = await axios.get(`${blog_service}/api/v1/blog/${blogId.value}`);
-    blog.value = data.blog.blog;
-    author.value = data.blog.author.user;
+    blog.value = data.blog;
+    author.value = data.author?.user || null;
   } catch (error) {
     console.error('Failed to load blog:', error);
   } finally {

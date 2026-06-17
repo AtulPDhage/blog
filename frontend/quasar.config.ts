@@ -53,6 +53,9 @@ export default defineConfig((/* ctx */) => {
       // publicPath: '/',
       // define: {},
       // defineEnv: {}
+      env: {
+        clientPrefix: 'VITE_',
+      },
       // ignorePublicFolder: true,
       // minify: false,
       // distDir

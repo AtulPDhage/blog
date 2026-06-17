@@ -149,7 +149,7 @@ async function fetchBlogDetails() {
   initLoading.value = true;
   try {
     const { data } = await axios.get(`${blog_service}/api/v1/blog/${blogId.value}`);
-    const blog = data.blog.blog;
+    const blog = data.blog;
     formData.title = blog.title;
     formData.description = blog.description;
     formData.category = blog.category;

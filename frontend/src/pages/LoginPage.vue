@@ -75,7 +75,7 @@ function initializeGoogleClient() {
 
   try {
     googleClient = google.accounts.oauth2.initCodeClient({
-      client_id: '720531130636-e9r983didu9ske1smpbol7l6egj1e4im.apps.googleusercontent.com',
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
       scope: 'openid email profile',
       ux_mode: 'popup',
       callback: (authResult) => {

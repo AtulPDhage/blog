@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -19,6 +20,7 @@ import (
 var s3Client *s3.Client
 var s3BucketName string
 var s3Region string
+var s3Endpoint string
 
 // UploadImageFn points to the default S3 uploader, editable for testing mocks
 var UploadImageFn = UploadToS3
@@ -27,16 +29,63 @@ var UploadImageFn = UploadToS3
 func InitS3(accessKey, secretKey, region, bucket string) error {
 	s3BucketName = bucket
 	s3Region = region
+	s3Endpoint = os.Getenv("AWS_ENDPOINT")
 
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(region),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
-	)
+	var cfg aws.Config
+	var err error
+
+	if s3Endpoint != "" {
+		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+			return aws.Endpoint{
+				URL:               s3Endpoint,
+				HostnameImmutable: true,
+			}, nil
+		})
+		cfg, err = config.LoadDefaultConfig(context.TODO(),
+			config.WithRegion(region),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
+			config.WithEndpointResolverWithOptions(customResolver),
+		)
+	} else {
+		cfg, err = config.LoadDefaultConfig(context.TODO(),
+			config.WithRegion(region),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
+		)
+	}
+
 	if err != nil {
 		return fmt.Errorf("failed to load AWS configuration: %w", err)
 	}
 
-	s3Client = s3.NewFromConfig(cfg)
+	s3Client = s3.NewFromConfig(cfg, func(o *s3.Options) {
+		if s3Endpoint != "" || os.Getenv("AWS_S3_FORCE_PATH_STYLE") == "true" {
+			o.UsePathStyle = true
+		}
+	})
+
+	// Auto-create bucket for local development / MinIO setup
+	_, _ = s3Client.CreateBucket(context.TODO(), &s3.CreateBucketInput{
+		Bucket: aws.String(bucket),
+	})
+
+	// Set public read policy on the bucket for local development / MinIO setup
+	policy := fmt.Sprintf(`{
+		"Version": "2012-10-17",
+		"Statement": [
+			{
+				"Sid": "PublicReadGetObject",
+				"Effect": "Allow",
+				"Principal": "*",
+				"Action": "s3:GetObject",
+				"Resource": "arn:aws:s3:::%s/*"
+			}
+		]
+	}`, bucket)
+	_, _ = s3Client.PutBucketPolicy(context.TODO(), &s3.PutBucketPolicyInput{
+		Bucket: aws.String(bucket),
+		Policy: aws.String(policy),
+	})
+
 	logger.Logger.Info("AWS S3 client initialized successfully")
 	return nil
 }
@@ -64,7 +113,12 @@ func UploadToS3(ctx context.Context, file io.Reader, originalFilename, contentTy
 	}
 
 	// Generate public S3 URL
-	fileURL := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", s3BucketName, s3Region, key)
-	logger.Logger.Info("File uploaded successfully to S3", zap.String("url", fileURL))
+	var fileURL string
+	if s3Endpoint != "" {
+		fileURL = fmt.Sprintf("%s/%s/%s", s3Endpoint, s3BucketName, key)
+	} else {
+		fileURL = fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", s3BucketName, s3Region, key)
+	}
+	logger.Logger.Info("File uploaded successfully to S3/MinIO", zap.String("url", fileURL))
 	return fileURL, nil
 }
