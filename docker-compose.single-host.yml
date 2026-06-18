@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  # ── PostgreSQL Database ──────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: blog-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretdbpassword
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+  # ── MongoDB Database ─────────────────────────
+  mongodb:
+    image: mongo:6-jammy
+    container_name: blog-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+  # ── Redis Cache ──────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: blog-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+  # ── RabbitMQ Broker ──────────────────────────
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: blog-rabbitmq
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Web Console
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: mysecretmqpassword
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+  # ── User Service ─────────────────────────────
+  user-service:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/blog-platform/user-service:latest
+    ports:
+      - "5002:5002"
+    environment:
+      - PORT=5002
+      - MONGO_URI=mongodb://mongodb:27017
+      - DB_NAME=MasterDB
+      - JWT_SECRET=mysecretjwttoken
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+  # ── Author Service ───────────────────────────
+  author-service:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/blog-platform/author-service:latest
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - DB_URL=postgres://postgres:mysecretdbpassword@postgres:5432/postgres?sslmode=disable
+      - RABBITMQ_URL=amqp://admin:mysecretmqpassword@rabbitmq:5672/
+      - JWT_SECRET=mysecretjwttoken
+    depends_on:
+      - postgres
+      - rabbitmq
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+  # ── Blog Service ─────────────────────────────
+  blog-service:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/blog-platform/blog-service:latest
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - DB_URL=postgres://postgres:mysecretdbpassword@postgres:5432/postgres?sslmode=disable
+      - REDIS_URL=redis:6379
+      - RABBITMQ_URL=amqp://admin:mysecretmqpassword@rabbitmq:5672/
+      - JWT_SECRET=mysecretjwttoken
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+  # ── Frontend ─────────────────────────────────
+  frontend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/blog-platform/frontend:latest
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+volumes:
+  postgres-data:
+  mongodb-data:
+
+networks:
+  blog-network:
+    driver: bridge
