@@ -1,7 +1,8 @@
 <template>
   <q-page class="home-page q-py-lg q-px-md">
     <!-- Main Loader -->
-    <div v-if="store.loading">
+    <!-- Blogs Content Grid -->
+    <div v-if="store.blogLoading && (!store.blogs || store.blogs.length === 0)">
       <loading-spinner />
     </div>
 
@@ -22,61 +23,124 @@
         />
       </div>
 
-      <!-- Blogs Content Grid -->
-      <div v-if="store.blogLoading">
-        <loading-spinner />
+      <!-- Empty Feed State -->
+      <div
+        v-if="!store.blogs || store.blogs.length === 0"
+        class="column items-center q-py-xl text-grey-6 text-center"
+      >
+        <q-icon name="article" size="64px" class="q-mb-md" />
+        <p class="text-h6 text-weight-regular">No blogs found yet!</p>
+        <q-btn
+          v-if="store.isAuth"
+          color="primary"
+          to="/blog/new"
+          label="Write the first one"
+          no-caps
+          class="q-mt-sm rounded-borders"
+        />
       </div>
 
-      <div v-else>
-        <!-- Empty Feed State -->
-        <div
-          v-if="!store.blogs || store.blogs.length === 0"
-          class="column items-center q-py-xl text-grey-6 text-center"
+      <!-- Infinite Scroll Cards Feed Grid -->
+      <q-infinite-scroll v-else @load="loadMore" :offset="250" ref="infiniteScrollRef">
+        <q-virtual-scroll
+          type="list"
+          :items="blogRows"
+          :virtual-scroll-item-size="380"
+          scroll-target="body"
         >
-          <q-icon name="article" size="64px" class="q-mb-md" />
-          <p class="text-h6 text-weight-regular">No blogs found yet!</p>
-          <q-btn
-            v-if="store.isAuth"
-            color="primary"
-            to="/blog/new"
-            label="Write the first one"
-            no-caps
-            class="q-mt-sm rounded-borders"
-          />
-        </div>
-
-        <!-- Cards Feed Grid -->
-        <div v-else class="blogs-grid">
-          <div v-for="blog in store.blogs" :key="blog.id" class="blog-grid-item">
-            <blog-card
-              :id="blog.id"
-              :image="blog.image"
-              :title="blog.title"
-              :desc="blog.description"
-              :time="blog.created_at"
-            />
+          <template v-slot="{ item: row, index }">
+            <div :key="index" class="blogs-grid q-mb-md">
+              <div v-for="blog in row" :key="blog.id" class="blog-grid-item">
+                <blog-card
+                  :id="blog.id"
+                  :image="blog.image"
+                  :title="blog.title"
+                  :desc="blog.description"
+                  :time="blog.created_at"
+                />
+              </div>
+            </div>
+          </template>
+        </q-virtual-scroll>
+        <template v-slot:loading>
+          <div class="row justify-center q-my-md">
+            <q-spinner-dots color="primary" size="40px" />
           </div>
-        </div>
-      </div>
+        </template>
+      </q-infinite-scroll>
     </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
+import { useQuasar } from 'quasar';
 import { useAppStore } from '@/stores/app';
 import BlogCard from '@/components/BlogCard.vue';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
 
 const store = useAppStore();
+const $q = useQuasar();
+
+const limit = 12;
+const hasMore = ref(true);
+const infiniteScrollRef = ref<{ resume: () => void; trigger: () => void } | null>(null);
+
+const columnsCount = computed(() => {
+  if ($q.screen.gt.md) return 4;
+  if ($q.screen.gt.sm) return 3;
+  if ($q.screen.gt.xs) return 2;
+  return 1;
+});
+
+const blogRows = computed(() => {
+  const blogs = store.blogs || [];
+  const size = columnsCount.value;
+  const chunked = [];
+  for (let i = 0; i < blogs.length; i += size) {
+    chunked.push(blogs.slice(i, i + size));
+  }
+  return chunked;
+});
 
 function toggleFilter() {
   store.leftDrawerOpen = !store.leftDrawerOpen;
 }
 
-onMounted(() => {
-  void store.fetchBlogs();
-});
+async function loadMore(index: number, done: (stop?: boolean) => void) {
+  if (!hasMore.value) {
+    done(true);
+    return;
+  }
+
+  const offset = store.blogs ? store.blogs.length : 0;
+  const fetched = await store.fetchBlogs(limit, offset, true);
+
+  if (fetched.length < limit) {
+    hasMore.value = false;
+    done(true);
+  } else {
+    done();
+  }
+}
+
+function resetPagination() {
+  hasMore.value = true;
+  store.blogs = [];
+  void nextTick(() => {
+    if (infiniteScrollRef.value) {
+      infiniteScrollRef.value.resume();
+      infiniteScrollRef.value.trigger();
+    }
+  });
+}
+
+watch(
+  () => [store.searchQuery, store.category],
+  () => {
+    resetPagination();
+  },
+);
 </script>
 
 <style scoped>

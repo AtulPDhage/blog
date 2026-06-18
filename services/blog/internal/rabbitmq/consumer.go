@@ -74,9 +74,9 @@ func StartCacheConsumer() {
 					}
 
 					if deleted > 0 {
-						// Refill default empty search category list key: blogs::
-						cacheKey := "blogs::"
-						blogs, err := repo.GetAllBlogs(ctx, "", "")
+						// Refill default empty search category list key: blogs:::12:0
+						cacheKey := "blogs:::12:0"
+						blogs, err := repo.GetAllBlogs(ctx, "", "", 12, 0)
 						if err != nil {
 							logger.Logger.Error("Failed to fetch blogs from database for cache refill", zap.Error(err))
 							continue

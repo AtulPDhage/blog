@@ -6,13 +6,13 @@ Postly is a production-grade, highly responsive, and feature-rich blogging appli
 
 ## Tech Stack & Architecture
 
-* **Core Framework**: Vue 3 (Composition API using `<script setup lang="ts">`)
-* **UI Component Library**: Quasar Framework (v2)
-* **Build Engine**: Vite 3 (`@quasar/app-vite`)
-* **State Management**: Pinia Store
-* **HTTP Client**: Axios
-* **Security & Sanitization**: DOMPurify (for Jodit Rich Text XSS prevention)
-* **Auth Protocol**: Google OAuth 2.0 (Authorization Code Grant via Google Identity Services)
+- **Core Framework**: Vue 3 (Composition API using `<script setup lang="ts">`)
+- **UI Component Library**: Quasar Framework (v2)
+- **Build Engine**: Vite 3 (`@quasar/app-vite`)
+- **State Management**: Pinia Store
+- **HTTP Client**: Axios
+- **Security & Sanitization**: DOMPurify (for Jodit Rich Text XSS prevention)
+- **Auth Protocol**: Google OAuth 2.0 (Authorization Code Grant via Google Identity Services)
 
 ---
 
@@ -63,6 +63,7 @@ npm install
 ```bash
 npm run dev
 ```
+
 The application will start in development mode on `http://localhost:8080`.
 
 ### 3. Lint & Format check
@@ -70,6 +71,7 @@ The application will start in development mode on `http://localhost:8080`.
 ```bash
 npm run lint
 ```
+
 Formating is powered by **Prettier** and code quality is checked by **ESLint**.
 
 ### 4. Build for production compilation
@@ -77,11 +79,12 @@ Formating is powered by **Prettier** and code quality is checked by **ESLint**.
 ```bash
 npm run build
 ```
+
 The optimized bundled build files will be generated under the `dist/spa` folder.
 
 ---
 
 ## Security Guidelines
 
-* **XSS Prevention**: Since blog posts are authored in Jodit (HTML output) and rendered dynamically, the application explicitly processes all HTML views through `DOMPurify` before injecting them using `v-html`. Avoid using raw `v-html` directly without sanitizing.
-* **Session Security**: The user authentication token is handled via Secure cookies using the `js-cookie` library. Unauthenticated routes redirect to `/login` automatically via synchronous router navigation guards.
+- **XSS Prevention**: Since blog posts are authored in Jodit (HTML output) and rendered dynamically, the application explicitly processes all HTML views through `DOMPurify` before injecting them using `v-html`. Avoid using raw `v-html` directly without sanitizing.
+- **Session Security**: The user authentication token is handled via Secure cookies using the `js-cookie` library. Unauthenticated routes redirect to `/login` automatically via synchronous router navigation guards.

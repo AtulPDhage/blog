@@ -36,25 +36,36 @@ const (
 	SelectAllBlogsQuery = `
 		SELECT id, title, description, blogcontent, image, category, author, created_at
 		FROM blogs
-		ORDER BY created_at DESC;`
+		ORDER BY created_at DESC
+		LIMIT $1 OFFSET $2;`
 
 	SelectBlogsByCategoryQuery = `
 		SELECT id, title, description, blogcontent, image, category, author, created_at
 		FROM blogs
 		WHERE category = $1
-		ORDER BY created_at DESC;`
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3;`
 
 	SelectBlogsBySearchQuery = `
 		SELECT id, title, description, blogcontent, image, category, author, created_at
 		FROM blogs
 		WHERE (title ILIKE $1 OR description ILIKE $1)
-		ORDER BY created_at DESC;`
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3;`
 
 	SelectBlogsBySearchAndCategoryQuery = `
 		SELECT id, title, description, blogcontent, image, category, author, created_at
 		FROM blogs
 		WHERE (title ILIKE $1 OR description ILIKE $1) AND category = $2
-		ORDER BY created_at DESC;`
+		ORDER BY created_at DESC
+		LIMIT $3 OFFSET $4;`
+
+	SelectSavedBlogsDetailedByUserIDQuery = `
+		SELECT b.id, b.title, b.description, b.blogcontent, b.image, b.category, b.author, b.created_at
+		FROM savedblogs sb
+		JOIN blogs b ON sb.blogid = CAST(b.id AS VARCHAR)
+		WHERE sb.userid = $1
+		ORDER BY sb.created_at DESC;`
 
 	SelectBlogByIDQuery = `
 		SELECT id, title, description, blogcontent, image, category, author, created_at

@@ -49,10 +49,7 @@ const store = useAppStore();
 const router = useRouter();
 
 const filteredBlogs = computed(() => {
-  if (!store.blogs || !store.savedBlogs) return [];
-  return store.blogs.filter((blog) =>
-    store.savedBlogs!.some((saved) => saved.blogid === String(blog.id)),
-  );
+  return store.savedBlogs || [];
 });
 
 onMounted(async () => {
@@ -65,7 +62,6 @@ onMounted(async () => {
   if (store.loading) {
     await store.fetchUser();
   }
-  await store.fetchBlogs();
   await store.getSavedBlogs();
 });
 </script>

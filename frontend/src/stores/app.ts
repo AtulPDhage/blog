@@ -52,7 +52,7 @@ export const useAppStore = defineStore('app', {
     blogLoading: false,
     searchQuery: '',
     category: '',
-    savedBlogs: null as SavedBlogType[] | null,
+    savedBlogs: null as Blog[] | null,
     leftDrawerOpen: false,
   }),
 
@@ -84,15 +84,24 @@ export const useAppStore = defineStore('app', {
       }
     },
 
-    async fetchBlogs() {
-      this.blogLoading = true;
+    async fetchBlogs(limit = 12, offset = 0, append = false) {
+      if (!append) {
+        this.blogLoading = true;
+      }
       try {
         const { data } = await axios.get(
-          `${blog_service}/api/v1/blog/all?searchQuery=${this.searchQuery}&category=${this.category}`,
+          `${blog_service}/api/v1/blog/all?searchQuery=${this.searchQuery}&category=${this.category}&limit=${limit}&offset=${offset}`,
         );
-        this.blogs = data?.blogs || [];
+        const newBlogs = data?.blogs || [];
+        if (append) {
+          this.blogs = [...(this.blogs || []), ...newBlogs];
+        } else {
+          this.blogs = newBlogs;
+        }
+        return newBlogs;
       } catch (err) {
         console.error('Fetch blogs error:', err);
+        return [];
       } finally {
         this.blogLoading = false;
       }
@@ -107,7 +116,7 @@ export const useAppStore = defineStore('app', {
             Authorization: `Bearer ${token}`,
           },
         });
-        this.savedBlogs = data;
+        this.savedBlogs = data || [];
       } catch (error) {
         console.error('Get saved blogs error:', error);
       }
@@ -126,12 +135,10 @@ export const useAppStore = defineStore('app', {
 
     setSearchQuery(query: string) {
       this.searchQuery = query;
-      void this.fetchBlogs();
     },
 
     setCategory(category: string) {
       this.category = category;
-      void this.fetchBlogs();
     },
 
     async initApp() {

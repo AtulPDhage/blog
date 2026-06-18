@@ -22,12 +22,28 @@ func NewBlogHandler(s *service.BlogService) *BlogHandler {
 	return &BlogHandler{service: s}
 }
 
-// GetAllBlogs handler retrieves all blogs with optional query filtering
+// GetAllBlogs handler retrieves all blogs with optional query filtering and pagination
 func (h *BlogHandler) GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 	searchQuery := r.URL.Query().Get("searchQuery")
 	category := r.URL.Query().Get("category")
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
 
-	blogs, err := h.service.GetAllBlogs(r.Context(), searchQuery, category)
+	limit := 12
+	if limitStr != "" {
+		if val, err := strconv.Atoi(limitStr); err == nil && val > 0 {
+			limit = val
+		}
+	}
+
+	offset := 0
+	if offsetStr != "" {
+		if val, err := strconv.Atoi(offsetStr); err == nil && val >= 0 {
+			offset = val
+		}
+	}
+
+	blogs, err := h.service.GetAllBlogs(r.Context(), searchQuery, category, limit, offset)
 	if err != nil {
 		logger.Logger.Error("GetAllBlogs service call failed", zap.Error(err))
 		middleware.JsonError(w, http.StatusInternalServerError, "Internal Server Error")

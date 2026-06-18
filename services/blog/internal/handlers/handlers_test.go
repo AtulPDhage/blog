@@ -26,7 +26,7 @@ import (
 
 type mockBlogRepository struct {
 	db.BlogRepository
-	GetAllBlogsFn    func(ctx context.Context, searchQuery, category string) ([]models.Blog, error)
+	GetAllBlogsFn    func(ctx context.Context, searchQuery, category string, limit, offset int) ([]models.Blog, error)
 	GetSingleBlogFn  func(ctx context.Context, id int) (*models.Blog, error)
 	AddCommentFn     func(ctx context.Context, comment string, blogID string, userID, username string) error
 	GetAllCommentsFn func(ctx context.Context, blogID string) ([]models.Comment, error)
@@ -34,12 +34,12 @@ type mockBlogRepository struct {
 	DeleteCommentFn  func(ctx context.Context, commentID int) error
 	GetSavedBlogFn   func(ctx context.Context, userID string, blogID string) (*models.SavedBlog, error)
 	SaveBlogFn       func(ctx context.Context, userID string, blogID string) (bool, error)
-	GetSavedBlogsFn  func(ctx context.Context, userID string) ([]models.SavedBlog, error)
+	GetSavedBlogsFn  func(ctx context.Context, userID string) ([]models.Blog, error)
 }
 
-func (m *mockBlogRepository) GetAllBlogs(ctx context.Context, searchQuery, category string) ([]models.Blog, error) {
+func (m *mockBlogRepository) GetAllBlogs(ctx context.Context, searchQuery, category string, limit, offset int) ([]models.Blog, error) {
 	if m.GetAllBlogsFn != nil {
-		return m.GetAllBlogsFn(ctx, searchQuery, category)
+		return m.GetAllBlogsFn(ctx, searchQuery, category, limit, offset)
 	}
 	return []models.Blog{}, nil
 }
@@ -93,11 +93,11 @@ func (m *mockBlogRepository) SaveBlog(ctx context.Context, userID string, blogID
 	return false, nil
 }
 
-func (m *mockBlogRepository) GetSavedBlogs(ctx context.Context, userID string) ([]models.SavedBlog, error) {
+func (m *mockBlogRepository) GetSavedBlogs(ctx context.Context, userID string) ([]models.Blog, error) {
 	if m.GetSavedBlogsFn != nil {
 		return m.GetSavedBlogsFn(ctx, userID)
 	}
-	return []models.SavedBlog{}, nil
+	return []models.Blog{}, nil
 }
 
 func TestMain(m *testing.M) {
@@ -212,7 +212,7 @@ func TestMaxBodySizeMiddleware(t *testing.T) {
 
 func TestGetAllBlogs(t *testing.T) {
 	mockRepo := &mockBlogRepository{
-		GetAllBlogsFn: func(ctx context.Context, searchQuery, category string) ([]models.Blog, error) {
+		GetAllBlogsFn: func(ctx context.Context, searchQuery, category string, limit, offset int) ([]models.Blog, error) {
 			return []models.Blog{
 				{ID: 1, Title: "Test Blog 1", Author: "user1"},
 				{ID: 2, Title: "Test Blog 2", Author: "user2"},
@@ -434,13 +434,13 @@ func TestSaveBlog(t *testing.T) {
 			}
 			return false, errors.New("invalid save params")
 		},
-		GetSavedBlogsFn: func(ctx context.Context, userID string) ([]models.SavedBlog, error) {
+		GetSavedBlogsFn: func(ctx context.Context, userID string) ([]models.Blog, error) {
 			if userID == "user1" {
-				return []models.SavedBlog{
-					{ID: 100, UserID: "user1", BlogID: "5"},
+				return []models.Blog{
+					{ID: 5, Title: "Saved Blog Title", Author: "user1"},
 				}, nil
 			}
-			return []models.SavedBlog{}, nil
+			return []models.Blog{}, nil
 		},
 	}
 
@@ -503,10 +503,10 @@ func TestSaveBlog(t *testing.T) {
 			t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
 		}
 
-		var saved []models.SavedBlog
+		var saved []models.Blog
 		_ = json.NewDecoder(w.Body).Decode(&saved)
-		if len(saved) != 1 || saved[0].BlogID != "5" {
-			t.Errorf("expected saved blog ID '5', got %+v", saved)
+		if len(saved) != 1 || saved[0].ID != 5 {
+			t.Errorf("expected saved blog ID 5, got %+v", saved)
 		}
 	})
 }

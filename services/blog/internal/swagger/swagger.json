@@ -34,6 +34,24 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Number of blogs to retrieve (default 12)",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "Offset/skip count for pagination (default 0)",
+            "schema": {
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -319,7 +337,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/SavedBlog"
+                    "$ref": "#/components/schemas/Blog"
                   }
                 }
               }

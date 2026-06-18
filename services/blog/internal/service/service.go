@@ -37,8 +37,8 @@ func (s *BlogService) SetHTTPClient(client *http.Client) {
 }
 
 // GetAllBlogs fetches blogs with cache check and fallback to DB
-func (s *BlogService) GetAllBlogs(ctx context.Context, searchQuery, category string) ([]models.Blog, error) {
-	cacheKey := fmt.Sprintf("blogs:%s:%s", searchQuery, category)
+func (s *BlogService) GetAllBlogs(ctx context.Context, searchQuery, category string, limit, offset int) ([]models.Blog, error) {
+	cacheKey := fmt.Sprintf("blogs:%s:%s:%d:%d", searchQuery, category, limit, offset)
 
 	// Check Redis cache first
 	cached, err := redis.Get(ctx, cacheKey)
@@ -51,7 +51,7 @@ func (s *BlogService) GetAllBlogs(ctx context.Context, searchQuery, category str
 	}
 
 	// Fallback to Database
-	blogs, err := s.repo.GetAllBlogs(ctx, searchQuery, category)
+	blogs, err := s.repo.GetAllBlogs(ctx, searchQuery, category, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func (s *BlogService) SaveBlog(ctx context.Context, userID string, blogID string
 }
 
 // GetSavedBlogs retrieves all saved blogs
-func (s *BlogService) GetSavedBlogs(ctx context.Context, userID string) ([]models.SavedBlog, error) {
+func (s *BlogService) GetSavedBlogs(ctx context.Context, userID string) ([]models.Blog, error) {
 	if userID == "" {
 		return nil, errors.New("missing user ID")
 	}

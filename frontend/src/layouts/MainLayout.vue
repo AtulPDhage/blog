@@ -36,15 +36,15 @@
             :class="{ 'nav-link-active': route.path === '/blogs' }"
           />
 
-         <q-btn
-          v-if="store.isAuth"
-          flat
-          no-caps
-          label="Saved Blogs"
-          to="/blog/saved"
-          class="nav-link"
-          :class="{ 'nav-link-active': route.path === '/blog/saved' }"
-        />
+          <q-btn
+            v-if="store.isAuth"
+            flat
+            no-caps
+            label="Saved Blogs"
+            to="/blog/saved"
+            class="nav-link"
+            :class="{ 'nav-link-active': route.path === '/blog/saved' }"
+          />
           <q-btn
             v-if="store.isAuth"
             flat

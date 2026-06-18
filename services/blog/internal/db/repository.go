@@ -11,7 +11,7 @@ import (
 )
 
 type BlogRepository interface {
-	GetAllBlogs(ctx context.Context, searchQuery, category string) ([]models.Blog, error)
+	GetAllBlogs(ctx context.Context, searchQuery, category string, limit, offset int) ([]models.Blog, error)
 	GetSingleBlog(ctx context.Context, id int) (*models.Blog, error)
 	AddComment(ctx context.Context, comment string, blogID string, userID, username string) error
 	GetAllComments(ctx context.Context, blogID string) ([]models.Comment, error)
@@ -19,7 +19,7 @@ type BlogRepository interface {
 	DeleteComment(ctx context.Context, commentID int) error
 	GetSavedBlog(ctx context.Context, userID string, blogID string) (*models.SavedBlog, error)
 	SaveBlog(ctx context.Context, userID string, blogID string) (bool, error) // Returns true if saved, false if removed
-	GetSavedBlogs(ctx context.Context, userID string) ([]models.SavedBlog, error)
+	GetSavedBlogs(ctx context.Context, userID string) ([]models.Blog, error)
 }
 
 type PostgresBlogRepository struct{}
@@ -28,21 +28,21 @@ func NewPostgresBlogRepository() BlogRepository {
 	return &PostgresBlogRepository{}
 }
 
-// GetAllBlogs retrieves all blogs matching optional searchQuery and category
-func (r *PostgresBlogRepository) GetAllBlogs(ctx context.Context, searchQuery, category string) ([]models.Blog, error) {
+// GetAllBlogs retrieves all blogs matching optional searchQuery and category, with pagination
+func (r *PostgresBlogRepository) GetAllBlogs(ctx context.Context, searchQuery, category string, limit, offset int) ([]models.Blog, error) {
 	var rows pgx.Rows
 	var err error
 
 	if searchQuery != "" && category != "" {
 		wildcardSearch := "%" + searchQuery + "%"
-		rows, err = Pool.Query(ctx, SelectBlogsBySearchAndCategoryQuery, wildcardSearch, category)
+		rows, err = Pool.Query(ctx, SelectBlogsBySearchAndCategoryQuery, wildcardSearch, category, limit, offset)
 	} else if searchQuery != "" {
 		wildcardSearch := "%" + searchQuery + "%"
-		rows, err = Pool.Query(ctx, SelectBlogsBySearchQuery, wildcardSearch)
+		rows, err = Pool.Query(ctx, SelectBlogsBySearchQuery, wildcardSearch, limit, offset)
 	} else if category != "" {
-		rows, err = Pool.Query(ctx, SelectBlogsByCategoryQuery, category)
+		rows, err = Pool.Query(ctx, SelectBlogsByCategoryQuery, category, limit, offset)
 	} else {
-		rows, err = Pool.Query(ctx, SelectAllBlogsQuery)
+		rows, err = Pool.Query(ctx, SelectAllBlogsQuery, limit, offset)
 	}
 
 	if err != nil {
@@ -237,27 +237,31 @@ func (r *PostgresBlogRepository) SaveBlog(ctx context.Context, userID string, bl
 	}
 }
 
-// GetSavedBlogs retrieves all saved blogs for a user
-func (r *PostgresBlogRepository) GetSavedBlogs(ctx context.Context, userID string) ([]models.SavedBlog, error) {
-	rows, err := Pool.Query(ctx, SelectSavedBlogsByUserIDQuery, userID)
+// GetSavedBlogs retrieves all saved blogs for a user with full details
+func (r *PostgresBlogRepository) GetSavedBlogs(ctx context.Context, userID string) ([]models.Blog, error) {
+	rows, err := Pool.Query(ctx, SelectSavedBlogsDetailedByUserIDQuery, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query saved blogs: %w", err)
 	}
 	defer rows.Close()
 
-	var blogs []models.SavedBlog
+	var blogs []models.Blog
 	for rows.Next() {
-		var sb models.SavedBlog
+		var b models.Blog
 		err := rows.Scan(
-			&sb.ID,
-			&sb.UserID,
-			&sb.BlogID,
-			&sb.CreatedAt,
+			&b.ID,
+			&b.Title,
+			&b.Description,
+			&b.BlogContent,
+			&b.Image,
+			&b.Category,
+			&b.Author,
+			&b.CreatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan saved blog row: %w", err)
 		}
-		blogs = append(blogs, sb)
+		blogs = append(blogs, b)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -265,7 +269,7 @@ func (r *PostgresBlogRepository) GetSavedBlogs(ctx context.Context, userID strin
 	}
 
 	if blogs == nil {
-		blogs = []models.SavedBlog{}
+		blogs = []models.Blog{}
 	}
 
 	return blogs, nil

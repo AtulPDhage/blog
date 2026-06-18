@@ -215,7 +215,7 @@ const sanitizedBlogContent = computed(() => {
 
 const saved = computed(() => {
   if (!store.savedBlogs) return false;
-  return store.savedBlogs.some((b) => b.blogid === blogId.value);
+  return store.savedBlogs.some((b) => String(b.id) === blogId.value);
 });
 
 async function fetchBlogDetails() {
