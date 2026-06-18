@@ -52,9 +52,20 @@ const router = useRouter();
 const formattedDate = computed(() => {
   if (!props.time) return '';
   const date = new Date(props.time);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
+  
+  // Format to DD-MM-YYYY in Asia/Kolkata timezone (IST)
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+  
+  const parts = formatter.formatToParts(date);
+  const day = parts.find(p => p.type === 'day')?.value || '';
+  const month = parts.find(p => p.type === 'month')?.value || '';
+  const year = parts.find(p => p.type === 'year')?.value || '';
+  
   return `${day}-${month}-${year}`;
 });
 

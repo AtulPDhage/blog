@@ -207,8 +207,9 @@
                 </q-avatar>
                 
                 <div class="column flex-grow-1 overflow-hidden">
-                  <div class="row items-center justify-between no-wrap">
-                    <span class="text-weight-bold text-main text-body2 ellipsis">{{ commentItem.username }}</span>
+                  <div class="comment-meta">
+                    <span class="comment-author-name text-main text-body2">{{ commentItem.username }}</span>
+                    <span class="text-caption text-sub font-brand">•</span>
                     <span class="text-caption text-sub font-brand">{{ formatCommentDate(commentItem.created_at) }}</span>
                   </div>
                   <p class="text-body2 text-muted q-mt-xs q-mb-none wrap-text leading-relaxed">
@@ -560,6 +561,7 @@ function formatPublishDate(time: string) {
   if (!time) return '';
   const date = new Date(time);
   return date.toLocaleDateString('en-US', {
+    timeZone: 'Asia/Kolkata',
     day: 'numeric',
     month: 'short',
     year: 'numeric'
@@ -569,11 +571,13 @@ function formatPublishDate(time: string) {
 function formatCommentDate(time: string) {
   if (!time) return '';
   const date = new Date(time);
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleString('en-US', {
+    timeZone: 'Asia/Kolkata',
     day: 'numeric',
     month: 'short',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    hour12: true
   });
 }
 
@@ -731,5 +735,22 @@ onMounted(async () => {
 .wrap-text {
   word-break: break-word;
   white-space: pre-line;
+}
+
+.comment-meta {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 6px;
+  width: 100%;
+}
+
+.comment-author-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+  font-weight: 700;
 }
 </style>

@@ -75,57 +75,62 @@
             <q-tooltip class="bg-grey-9 text-white">{{ isDarkMode ? 'Light mode' : 'Dark mode' }}</q-tooltip>
           </q-btn>
 
-          <q-btn-dropdown
+          <!-- Profile Dropdown Trigger -->
+          <q-btn
             v-if="store.isAuth && store.user"
             flat
             round
             dense
-            no-caps
-            class="profile-dropdown-trigger"
+            class="profile-avatar-btn"
           >
-            <template #label>
-              <q-avatar size="36px" class="avatar-ring shadow-sm">
-                <img :src="store.user.image || '/default-avatar.png'" alt="profile" />
-              </q-avatar>
-            </template>
+            <q-avatar size="36px" class="avatar-ring shadow-sm">
+              <img :src="store.user.image || '/default-avatar.png'" alt="profile" />
+            </q-avatar>
 
-            <div class="dropdown-profile-header q-px-md q-py-md row items-center no-wrap q-gutter-x-sm">
-              <q-avatar size="36px" class="shadow-sm">
-                <img :src="store.user.image || '/default-avatar.png'" alt="profile" />
-              </q-avatar>
-              <div class="column overflow-hidden">
-                <span class="text-weight-bold text-caption ellipsis text-main">{{ store.user.name }}</span>
-                <span class="text-caption text-sub ellipsis" style="font-size: 11px">{{ store.user.email }}</span>
+            <q-menu
+              anchor="bottom right"
+              self="top right"
+              class="profile-menu shadow-md"
+              style="border-radius: var(--radius-md); border: 1px solid var(--border-color); background-color: var(--bg-card);"
+            >
+              <div class="dropdown-profile-header q-px-md q-py-md row items-center no-wrap q-gutter-x-sm">
+                <q-avatar size="36px" class="shadow-sm">
+                  <img :src="store.user.image || '/default-avatar.png'" alt="profile" />
+                </q-avatar>
+                <div class="column overflow-hidden">
+                  <span class="text-weight-bold text-caption ellipsis text-main">{{ store.user.name }}</span>
+                  <span class="text-caption text-sub ellipsis" style="font-size: 11px">{{ store.user.email }}</span>
+                </div>
               </div>
-            </div>
 
-            <q-separator />
+              <q-separator />
 
-            <q-list style="min-width: 200px" class="q-py-xs dropdown-list">
-              <q-item clickable v-close-popup to="/profile" class="dropdown-item">
-                <q-item-section avatar>
-                  <q-icon name="person" size="xs" />
-                </q-item-section>
-                <q-item-section>My Profile</q-item-section>
-              </q-item>
-              
-              <q-item clickable v-close-popup to="/blog/saved" class="dropdown-item">
-                <q-item-section avatar>
-                  <q-icon name="bookmarks" size="xs" />
-                </q-item-section>
-                <q-item-section>Saved Blogs</q-item-section>
-              </q-item>
+              <q-list style="min-width: 200px" class="q-py-xs dropdown-list">
+                <q-item clickable v-close-popup to="/profile" class="dropdown-item">
+                  <q-item-section avatar>
+                    <q-icon name="person" size="xs" />
+                  </q-item-section>
+                  <q-item-section>My Profile</q-item-section>
+                </q-item>
+                
+                <q-item clickable v-close-popup to="/blog/saved" class="dropdown-item">
+                  <q-item-section avatar>
+                    <q-icon name="bookmarks" size="xs" />
+                  </q-item-section>
+                  <q-item-section>Saved Blogs</q-item-section>
+                </q-item>
 
-              <q-separator class="q-my-xs" />
+                <q-separator class="q-my-xs" />
 
-              <q-item clickable v-close-popup @click="handleLogout" class="dropdown-item text-negative-item">
-                <q-item-section avatar>
-                  <q-icon name="logout" size="xs" color="negative" />
-                </q-item-section>
-                <q-item-section class="text-negative">Logout</q-item-section>
-              </q-item>
-            </q-list>
-          </q-btn-dropdown>
+                <q-item clickable v-close-popup @click="handleLogout" class="dropdown-item text-negative-item">
+                  <q-item-section avatar>
+                    <q-icon name="logout" size="xs" color="negative" />
+                  </q-item-section>
+                  <q-item-section class="text-negative">Logout</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
 
           <q-btn
             v-else-if="!store.loading"
@@ -439,8 +444,6 @@ onMounted(() => {
 
 /* User Menu & Dropdown list */
 .avatar-ring {
-  border: 2px solid var(--q-primary);
-  padding: 2px;
   background-color: var(--bg-card);
   transition: transform 0.2s ease;
 }
