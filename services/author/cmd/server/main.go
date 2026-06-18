@@ -21,6 +21,7 @@ import (
 	"author/internal/rabbitmq"
 	"author/internal/s3"
 	"author/internal/service"
+	"author/internal/swagger"
 )
 
 // InjectGeminiAPIKey injects the Gemini API Key into the request context
@@ -89,6 +90,9 @@ func main() {
 	r.Use(middleware.CORSMiddleware())
 	r.Use(middleware.RateLimitMiddleware())
 	r.Use(InjectGeminiAPIKey(cfg.GeminiAPIKey))
+
+	// Register Swagger routes
+	swagger.RegisterRoutes(r)
 
 	// Register routes with route groups and specific middleware chains
 	r.Route("/api/v1", func(r chi.Router) {

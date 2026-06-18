@@ -1,0 +1,428 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Blog Service API",
+    "description": "API documentation for the Blog Service",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Base Server"
+    }
+  ],
+  "paths": {
+    "/api/v1/blog/all": {
+      "get": {
+        "summary": "Retrieve all blog posts",
+        "description": "Get a list of all blog posts with optional search and category filters. Served from Redis cache when available.",
+        "parameters": [
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "required": false,
+            "description": "Filter blogs by search query matching title/description",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "description": "Filter blogs by category",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of blogs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "blogs": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Blog"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/blog/{id}": {
+      "get": {
+        "summary": "Retrieve a single blog post",
+        "description": "Get detailed information about a single blog post along with its author profile from User Service. Cached in Redis.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Blog post ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Blog and author details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "blog": {
+                      "$ref": "#/components/schemas/Blog"
+                    },
+                    "author": {
+                      "type": "object",
+                      "description": "User profile details of the author"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid blog ID"
+          },
+          "404": {
+            "description": "Blog not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/comment/{id}": {
+      "get": {
+        "summary": "Retrieve comments for a blog post",
+        "description": "List all comments associated with the specified blog post.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Blog ID to load comments for",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Comment"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing blog ID"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Add a comment to a blog post",
+        "description": "Allows authenticated users to post a comment to a blog post.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Blog ID to add comment to",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["comment"],
+                "properties": {
+                  "comment": {
+                    "type": "string",
+                    "description": "The comment text content"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Comment added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Comment Added" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing blog ID or missing/invalid comment body"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/comment/{commentid}": {
+      "delete": {
+        "summary": "Delete a comment",
+        "description": "Deletes a comment after validating that the authenticated user is the owner.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "commentid",
+            "in": "path",
+            "required": true,
+            "description": "Comment ID to delete",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comment deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "comment deleted" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid comment ID"
+          },
+          "401": {
+            "description": "Unauthorized (Missing token or you are not owner of this comment)"
+          },
+          "404": {
+            "description": "Comment not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/save/{blogid}": {
+      "post": {
+        "summary": "Toggle save blog post",
+        "description": "Toggles the saved/unsaved status of a blog post for the authenticated user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "blogid",
+            "in": "path",
+            "required": true,
+            "description": "Blog ID to save/unsave",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Toggle successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Blog saved" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing blog ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/blogs/saved/all": {
+      "get": {
+        "summary": "Retrieve saved blog posts",
+        "description": "List all blog posts saved by the authenticated user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of saved blogs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SavedBlog"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Blog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "blogcontent": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string",
+            "description": "S3 URL of cover image"
+          },
+          "category": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string",
+            "description": "Author user ID"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "userid": {
+            "type": "string",
+            "description": "User ID of the commenter"
+          },
+          "username": {
+            "type": "string",
+            "description": "Username of the commenter"
+          },
+          "blogid": {
+            "type": "string",
+            "description": "Blog post ID"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SavedBlog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "userid": {
+            "type": "string",
+            "description": "User ID of the saver"
+          },
+          "blogid": {
+            "type": "string",
+            "description": "Saved Blog ID"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}

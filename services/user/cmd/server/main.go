@@ -21,6 +21,7 @@ import (
 	"user/internal/logger"
 	"user/internal/middleware"
 	"user/internal/service"
+	"user/internal/swagger"
 )
 
 func main() {
@@ -65,6 +66,9 @@ func main() {
 	// Apply global middlewares
 	r.Use(middleware.CORSMiddleware())
 	r.Use(middleware.RateLimitMiddleware())
+
+	// Register Swagger routes
+	swagger.RegisterRoutes(r)
 
 	// Register routes
 	r.Route("/api/v1", func(r chi.Router) {

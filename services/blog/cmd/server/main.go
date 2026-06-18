@@ -21,6 +21,7 @@ import (
 	"blog/internal/rabbitmq"
 	"blog/internal/redis"
 	"blog/internal/service"
+	"blog/internal/swagger"
 )
 
 func main() {
@@ -85,6 +86,9 @@ func main() {
 	// Apply global middlewares
 	r.Use(middleware.CORSMiddleware())
 	r.Use(middleware.RateLimitMiddleware())
+
+	// Register Swagger routes
+	swagger.RegisterRoutes(r)
 
 	// Register routes with route groups and specific middleware chains
 	r.Route("/api/v1", func(r chi.Router) {

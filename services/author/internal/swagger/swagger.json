@@ -1,0 +1,382 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Author Service API",
+    "description": "API documentation for the Author Service",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Base Server"
+    }
+  ],
+  "paths": {
+    "/api/v1/blog/new": {
+      "post": {
+        "summary": "Create a new blog post",
+        "description": "Allows authenticated authors to create a new blog post with a cover image.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "description", "blogcontent", "category", "file"],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title of the blog post"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Short description of the blog post"
+                  },
+                  "blogcontent": {
+                    "type": "string",
+                    "description": "Main HTML/text content of the blog post"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Category of the blog post"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Cover image file (JPEG, PNG, GIF, WEBP. Max 10MB)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Blog created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "blog": { "$ref": "#/components/schemas/Blog" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data or image format"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/blog/{id}": {
+      "post": {
+        "summary": "Update an existing blog post",
+        "description": "Allows an authenticated author to update their blog post details, and optionally replace the cover image.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Blog ID to update",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "blogcontent": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Optional new cover image file (JPEG, PNG, GIF, WEBP. Max 10MB)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Blog updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "blog": { "$ref": "#/components/schemas/Blog" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid blog ID or request payload"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - not authorized to update this blog"
+          },
+          "404": {
+            "description": "Blog not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a blog post",
+        "description": "Allows an authenticated author to delete their blog post.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Blog ID to delete",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Blog deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid blog ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - not authorized to delete this blog"
+          },
+          "404": {
+            "description": "Blog not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/ai/title": {
+      "post": {
+        "summary": "Correct grammar of blog title using AI",
+        "description": "Uses the Gemini AI service to clean and correct grammar for a blog title.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["text"],
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "The title text to check"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Corrected title text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload or Gemini failure"
+          }
+        }
+      }
+    },
+    "/api/v1/ai/description": {
+      "post": {
+        "summary": "Correct or generate a description using AI",
+        "description": "If a description is provided, it corrects the grammar. If the description is empty, it generates a description based on the title.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title of the blog post"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Optional description to correct"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Corrected or generated description text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload or Gemini failure"
+          }
+        }
+      }
+    },
+    "/api/v1/ai/blog": {
+      "post": {
+        "summary": "Correct grammar in HTML blog content",
+        "description": "Uses Gemini AI to correct the grammar in rich HTML blog post content, returning clean HTML.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["blog"],
+                "properties": {
+                  "blog": {
+                    "type": "string",
+                    "description": "HTML content to correct"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Corrected HTML content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "html": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing blog payload or Gemini failure"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Blog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "blogcontent": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string",
+            "description": "S3 URL of cover image"
+          },
+          "category": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string",
+            "description": "Author user ID (MongoDB ObjectID string)"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}
