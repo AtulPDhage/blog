@@ -1,122 +1,139 @@
 <template>
-  <q-page class="q-py-xl q-px-md bg-grey-1">
+  <q-page class="q-py-xl q-px-md bg-app-container">
     <div class="new-blog-container mx-auto">
-      <q-card flat borderless class="blog-card shadow-15 q-pa-lg">
-        <q-card-section>
-          <div class="text-h5 text-bold font-brand text-grey-9 q-mb-md">Add New Blog</div>
+      <q-card flat class="blog-create-card q-pa-lg shadow-sm">
+        <q-card-section class="q-pa-none q-mb-lg row items-center justify-between">
+          <div>
+            <h1 class="text-h4 text-bold font-brand text-main q-my-none">Create a New Post</h1>
+            <p class="text-subtitle2 text-sub q-my-none">Write and publish your story on Postly</p>
+          </div>
+          <span class="ai-badge">
+            <q-icon name="auto_awesome" />
+            <span>AI Powered</span>
+          </span>
         </q-card-section>
 
-        <q-card-section>
-          <q-form @submit.prevent="handleSubmit" class="q-gutter-y-md">
+        <q-card-section class="q-pa-none">
+          <q-form @submit.prevent="handleSubmit" class="q-gutter-y-lg">
             <!-- Title -->
             <div>
-              <label class="text-subtitle2 text-grey-8 font-brand">Title</label>
-              <div class="row items-center q-gutter-x-sm no-wrap q-mt-xs">
-                <q-input
-                  v-model="formData.title"
-                  outlined
-                  dense
-                  placeholder="Enter Blog title"
-                  :rules="[(val) => !!val || 'Title is required']"
-                  lazy-rules
-                  class="full-width title-input"
-                  :loading="aiTitleLoading"
-                />
+              <div class="row justify-between items-center q-mb-xs">
+                <label class="text-subtitle2 text-weight-bold text-main font-brand">Title</label>
                 <q-btn
                   v-if="formData.title"
-                  round
-                  color="primary"
-                  icon="auto_awesome"
+                  unevaluated
+                  no-caps
+                  class="ai-action-btn"
                   :loading="aiTitleLoading"
                   @click="aiImproveTitle"
                 >
-                  <q-tooltip>AI Improve Title</q-tooltip>
+                  <div class="row items-center no-wrap q-gutter-x-xs">
+                    <q-icon name="auto_awesome" size="14px" />
+                    <span>AI Polish</span>
+                  </div>
+                  <q-tooltip class="bg-grey-9 text-white">AI Improve Title</q-tooltip>
                 </q-btn>
               </div>
+              <q-input
+                v-model="formData.title"
+                outlined
+                dense
+                placeholder="Enter a catchy title..."
+                :rules="[(val) => !!val || 'Title is required']"
+                lazy-rules
+                class="title-input"
+                :loading="aiTitleLoading"
+              />
             </div>
 
             <!-- Description -->
             <div>
-              <label class="text-subtitle2 text-grey-8 font-brand">Description</label>
-              <div class="row items-center q-gutter-x-sm no-wrap q-mt-xs">
-                <q-input
-                  v-model="formData.description"
-                  outlined
-                  dense
-                  placeholder="Enter Blog description"
-                  :rules="[(val) => !!val || 'Description is required']"
-                  lazy-rules
-                  class="full-width desc-input"
-                  :loading="aiDescLoading"
-                />
+              <div class="row justify-between items-center q-mb-xs">
+                <label class="text-subtitle2 text-weight-bold text-main font-brand">Short Description</label>
                 <q-btn
                   v-if="formData.title"
-                  round
-                  color="primary"
-                  icon="auto_awesome"
+                  unevaluated
+                  no-caps
+                  class="ai-action-btn"
                   :loading="aiDescLoading"
                   @click="aiImproveDescription"
                 >
-                  <q-tooltip>AI Improve Description</q-tooltip>
+                  <div class="row items-center no-wrap q-gutter-x-xs">
+                    <q-icon name="auto_awesome" size="14px" />
+                    <span>AI Generate</span>
+                  </div>
+                  <q-tooltip class="bg-grey-9 text-white">AI Improve/Generate Description</q-tooltip>
                 </q-btn>
               </div>
-            </div>
-
-            <!-- Category -->
-            <div>
-              <label class="text-subtitle2 text-grey-8 font-brand">Category</label>
-              <q-select
-                v-model="formData.category"
-                :options="categories"
+              <q-input
+                v-model="formData.description"
                 outlined
                 dense
-                placeholder="Select Category"
-                :rules="[(val) => !!val || 'Category is required']"
+                placeholder="Write a brief overview of your blog post..."
+                :rules="[(val) => !!val || 'Description is required']"
                 lazy-rules
-                class="q-mt-xs"
+                class="desc-input"
+                :loading="aiDescLoading"
               />
             </div>
 
-            <!-- Image Upload -->
-            <div>
-              <label class="text-subtitle2 text-grey-8 font-brand">Upload Image</label>
-              <q-file
-                v-model="imageFile"
-                outlined
-                dense
-                accept="image/*"
-                placeholder="Click to upload cover image"
-                :rules="[(val) => !!val || 'Cover image is required']"
-                lazy-rules
-                class="q-mt-xs"
-                @update:model-value="handleFileChange"
-              >
-                <template #prepend>
-                  <q-icon name="cloud_upload" />
-                </template>
-              </q-file>
+            <!-- Category & Image Upload Section -->
+            <div class="row q-col-gutter-md">
+              <div class="col-12 col-sm-6">
+                <label class="text-subtitle2 text-weight-bold text-main font-brand q-mb-xs block">Category</label>
+                <q-select
+                  v-model="formData.category"
+                  :options="categories"
+                  outlined
+                  dense
+                  placeholder="Select Category"
+                  :rules="[(val) => !!val || 'Category is required']"
+                  lazy-rules
+                  class="category-select"
+                />
+              </div>
+
+              <div class="col-12 col-sm-6">
+                <label class="text-subtitle2 text-weight-bold text-main font-brand q-mb-xs block">Cover Image</label>
+                <q-file
+                  v-model="imageFile"
+                  outlined
+                  dense
+                  accept="image/*"
+                  placeholder="Choose cover image"
+                  :rules="[(val) => !!val || 'Cover image is required']"
+                  lazy-rules
+                  class="image-file-input"
+                  @update:model-value="handleFileChange"
+                >
+                  <template #prepend>
+                    <q-icon name="cloud_upload" class="text-sub" />
+                  </template>
+                </q-file>
+              </div>
             </div>
 
             <!-- Blog Content Jodit Editor -->
             <div>
               <div class="row items-center justify-between q-mb-xs">
-                <label class="text-subtitle2 text-grey-8 font-brand">Blog Content</label>
+                <label class="text-subtitle2 text-weight-bold text-main font-brand">Blog Story Content</label>
                 <q-btn
-                  flat
-                  dense
-                  color="primary"
-                  icon="auto_awesome"
-                  label="Fix Grammar"
+                  unevaluated
                   no-caps
+                  class="ai-action-btn"
                   :loading="aiBlogLoading"
                   @click="aiFixGrammar"
-                />
+                >
+                  <div class="row items-center no-wrap q-gutter-x-xs">
+                    <q-icon name="auto_awesome" size="14px" />
+                    <span>AI Fix Grammar</span>
+                  </div>
+                </q-btn>
               </div>
-              <div class="text-caption text-grey-6 q-mb-sm">
-                Paste your blog content or type here. Use the rich text formatting toolbar as
-                desired.
-              </div>
-              <div class="editor-wrapper border-grey-4">
+              <p class="text-caption text-sub q-mt-none q-mb-sm">
+                Write your thoughts. Use the formatting toolbar for customized rich formatting.
+              </p>
+              <div class="editor-wrapper">
                 <textarea ref="editorRef"></textarea>
               </div>
             </div>
@@ -125,9 +142,10 @@
             <q-btn
               type="submit"
               color="primary"
-              label="Submit Post"
+              label="Publish Post"
               no-caps
-              class="full-width q-py-md text-weight-bold rounded-borders q-mt-lg"
+              unevaluated
+              class="publish-btn full-width q-py-md text-weight-bold rounded-borders shadow-sm"
               :loading="submitLoading"
             />
           </q-form>
@@ -306,7 +324,7 @@ onMounted(() => {
   if (editorRef.value) {
     joditInstance = Jodit.make(editorRef.value, {
       readonly: false,
-      placeholder: 'Start typings...',
+      placeholder: 'Start typing your story...',
       height: 380,
     });
 
@@ -326,24 +344,41 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .new-blog-container {
-  max-width: 800px;
+  max-width: 820px;
   margin: 0 auto;
 }
 
-.blog-card {
-  border-radius: 16px;
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+.blog-create-card {
+  border-radius: var(--radius-lg);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
 }
 
-.font-brand {
-  font-family: 'Outfit', 'Inter', sans-serif;
-  letter-spacing: -0.5px;
+.ai-action-btn {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(236, 72, 153, 0.08));
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  color: var(--q-primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  min-height: auto;
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+
+.ai-action-btn:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(236, 72, 153, 0.15));
+  border-color: var(--q-primary);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.1);
 }
 
 .editor-wrapper {
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
   overflow: hidden;
+}
+
+.publish-btn {
+  font-size: 1rem;
 }
 </style>

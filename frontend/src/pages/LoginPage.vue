@@ -1,30 +1,41 @@
 <template>
-  <q-page class="flex flex-center q-pa-md bg-grey-1">
-    <div v-if="store.loading || localLoading">
+  <q-page class="flex flex-center q-pa-md bg-app-container relative-position overflow-hidden">
+    <!-- Glowing background elements for visual premium depth -->
+    <div class="glow-orb glow-orb-primary"></div>
+    <div class="glow-orb glow-orb-secondary"></div>
+
+    <div v-if="store.loading || localLoading" class="initial-loading">
       <loading-spinner />
     </div>
 
-    <div v-else class="login-container">
-      <q-card flat borderless class="login-card shadow-15">
+    <div v-else class="login-container z-top">
+      <q-card flat class="login-card shadow-xl q-pa-lg">
         <q-card-section class="text-center q-py-lg">
-          <div class="text-h5 text-bold font-brand text-grey-9 q-mb-xs">Login to Postly</div>
-          <div class="text-subtitle2 text-grey-6">your go-to blogging platform</div>
+          <q-avatar size="44px" class="bg-indigo-1 text-primary q-mb-md brand-logo-icon shadow-sm">
+            <q-icon name="auto_awesome" size="24px" class="brand-sparkle" />
+          </q-avatar>
+          <div class="text-h5 text-bold font-brand text-main q-mb-xs">Welcome to Postly</div>
+          <div class="text-body2 text-sub">Sign in to start writing and reading stories</div>
         </q-card-section>
 
-        <q-card-section class="q-px-lg q-pb-xl text-center">
+        <q-card-section class="q-px-md q-pb-lg">
           <q-btn
             unevaluated
-            color="white"
-            text-color="grey-9"
-            class="google-btn full-width q-py-md text-weight-bold"
             no-caps
+            class="google-btn full-width q-py-md text-weight-bold"
             @click="triggerGoogleLogin"
           >
-            <div class="row items-center justify-center q-gutter-x-sm">
+            <div class="row items-center justify-center q-gutter-x-md">
               <img src="/google.png" alt="Google icon" class="google-icon" />
-              <span>Login with Google</span>
+              <span class="text-body2 text-weight-bold">Continue with Google</span>
             </div>
           </q-btn>
+        </q-card-section>
+
+        <q-card-section class="q-pa-none text-center q-pb-md">
+          <p class="text-caption text-sub q-px-md">
+            By signing in, you agree to our Terms of Service and Privacy Policy.
+          </p>
         </q-card-section>
       </q-card>
     </div>
@@ -68,7 +79,6 @@ let googleClient: GoogleAuthClient | null = null;
 
 function initializeGoogleClient() {
   if (typeof google === 'undefined') {
-    // Retry loading in case the script tag hasn't loaded fully
     setTimeout(initializeGoogleClient, 200);
     return;
   }
@@ -154,32 +164,78 @@ onMounted(() => {
 <style scoped>
 .login-container {
   width: 100%;
-  max-width: 380px;
+  max-width: 400px;
 }
 
 .login-card {
-  border-radius: 16px;
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-lg);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-.font-brand {
-  font-family: 'Outfit', 'Inter', sans-serif;
-  letter-spacing: -0.5px;
+.brand-logo-icon {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.2)) !important;
+  border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.brand-sparkle {
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .google-btn {
-  border: 1px solid #dadce0;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition:
-    background-color 0.2s,
-    border-color 0.2s;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md) !important;
+  background-color: var(--bg-card) !important;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-main) !important;
+}
+
+.google-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--q-primary);
+  background-color: rgba(99, 102, 241, 0.02) !important;
 }
 
 .google-icon {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: block;
+}
+
+/* Background aesthetic glow orbs */
+.glow-orb {
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.12;
+  z-index: 1;
+}
+
+.glow-orb-primary {
+  background-color: #6366f1;
+  top: -100px;
+  left: -100px;
+}
+
+.glow-orb-secondary {
+  background-color: #ec4899;
+  bottom: -150px;
+  right: -100px;
+}
+
+body.body--dark .glow-orb {
+  opacity: 0.08;
+}
+
+.initial-loading {
+  z-index: 2;
 }
 </style>

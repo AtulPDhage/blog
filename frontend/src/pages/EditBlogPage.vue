@@ -1,46 +1,85 @@
 <template>
-  <q-page class="q-py-xl q-px-md bg-grey-1">
-    <div v-if="initLoading" class="flex flex-center">
+  <q-page class="q-py-xl q-px-md bg-app-container">
+    <div v-if="initLoading" class="flex flex-center initial-loading-container">
       <loading-spinner />
     </div>
 
     <div v-else class="new-blog-container mx-auto">
-      <q-card flat borderless class="blog-card shadow-15 q-pa-lg">
-        <q-card-section>
-          <div class="text-h5 text-bold font-brand text-grey-9 q-mb-md">Edit Blog Post</div>
+      <q-card flat class="blog-create-card q-pa-lg shadow-sm">
+        <q-card-section class="q-pa-none q-mb-lg row items-center justify-between">
+          <div>
+            <h1 class="text-h4 text-bold font-brand text-main q-my-none">Edit Blog Post</h1>
+            <p class="text-subtitle2 text-sub q-my-none">Update your story details and publish updates</p>
+          </div>
+          <span class="ai-badge">
+            <q-icon name="auto_awesome" />
+            <span>AI Assist Enabled</span>
+          </span>
         </q-card-section>
 
-        <q-card-section>
-          <q-form @submit.prevent="handleSubmit" class="q-gutter-y-md">
+        <q-card-section class="q-pa-none">
+          <q-form @submit.prevent="handleSubmit" class="q-gutter-y-lg">
             <!-- Title -->
             <div>
-              <label class="text-subtitle2 text-grey-8 font-brand">Title</label>
+              <div class="row justify-between items-center q-mb-xs">
+                <label class="text-subtitle2 text-weight-bold text-main font-brand">Title</label>
+                <q-btn
+                  v-if="formData.title"
+                  unevaluated
+                  no-caps
+                  class="ai-action-btn"
+                  :loading="aiTitleLoading"
+                  @click="aiImproveTitle"
+                >
+                  <div class="row items-center no-wrap q-gutter-x-xs">
+                    <q-icon name="auto_awesome" size="14px" />
+                    <span>AI Polish</span>
+                  </div>
+                </q-btn>
+              </div>
               <q-input
                 v-model="formData.title"
                 outlined
                 dense
-                placeholder="Enter Blog title"
+                placeholder="Enter title"
                 required
-                class="q-mt-xs full-width"
+                class="title-input"
+                :loading="aiTitleLoading"
               />
             </div>
 
             <!-- Description -->
             <div>
-              <label class="text-subtitle2 text-grey-8 font-brand">Description</label>
+              <div class="row justify-between items-center q-mb-xs">
+                <label class="text-subtitle2 text-weight-bold text-main font-brand">Short Description</label>
+                <q-btn
+                  v-if="formData.title"
+                  unevaluated
+                  no-caps
+                  class="ai-action-btn"
+                  :loading="aiDescLoading"
+                  @click="aiImproveDescription"
+                >
+                  <div class="row items-center no-wrap q-gutter-x-xs">
+                    <q-icon name="auto_awesome" size="14px" />
+                    <span>AI Generate</span>
+                  </div>
+                </q-btn>
+              </div>
               <q-input
                 v-model="formData.description"
                 outlined
                 dense
-                placeholder="Enter Blog description"
+                placeholder="Enter description"
                 required
-                class="q-mt-xs full-width"
+                class="desc-input"
+                :loading="aiDescLoading"
               />
             </div>
 
             <!-- Category -->
             <div>
-              <label class="text-subtitle2 text-grey-8 font-brand">Category</label>
+              <label class="text-subtitle2 text-weight-bold text-main font-brand q-mb-xs block">Category</label>
               <q-select
                 v-model="formData.category"
                 :options="categories"
@@ -48,44 +87,64 @@
                 dense
                 placeholder="Select Category"
                 required
-                class="q-mt-xs"
+                class="category-select"
               />
             </div>
 
             <!-- Cover Image Preview & Upload -->
             <div>
-              <label class="text-subtitle2 text-grey-8 font-brand">Cover Image</label>
-              <div v-if="existingImage && !imageFile" class="q-mt-xs q-mb-sm">
-                <q-img
-                  :src="existingImage"
-                  class="cover-preview rounded-borders shadow-1"
-                  fit="cover"
-                />
-                <div class="text-caption text-grey-5 q-mt-xs">Current cover image</div>
+              <label class="text-subtitle2 text-weight-bold text-main font-brand q-mb-xs block">Cover Image</label>
+              
+              <div v-if="existingImage && !imageFile" class="q-mb-md existing-preview-container row items-end q-gutter-x-md">
+                <div class="preview-img-wrapper shadow-sm rounded-borders">
+                  <q-img
+                    :src="existingImage"
+                    class="cover-preview"
+                    fit="cover"
+                  />
+                </div>
+                <div class="column q-gutter-y-xs">
+                  <span class="text-weight-medium text-body2 text-main">Current Cover Image</span>
+                  <span class="text-caption text-sub">Will keep this unless you choose a new file below.</span>
+                </div>
               </div>
+
               <q-file
                 v-model="imageFile"
                 outlined
                 dense
                 accept="image/*"
-                placeholder="Click to replace cover image"
-                class="q-mt-xs"
+                placeholder="Click to upload new cover image..."
+                class="image-file-input"
                 @update:model-value="handleFileChange"
               >
                 <template #prepend>
-                  <q-icon name="cloud_upload" />
+                  <q-icon name="cloud_upload" class="text-sub" />
                 </template>
               </q-file>
             </div>
 
             <!-- Blog Content Jodit Editor -->
             <div>
-              <label class="text-subtitle2 text-grey-8 font-brand">Blog Content</label>
-              <div class="text-caption text-grey-6 q-mb-sm">
-                Paste your blog content or type here. Use the rich text formatting toolbar as
-                desired.
+              <div class="row items-center justify-between q-mb-xs">
+                <label class="text-subtitle2 text-weight-bold text-main font-brand">Blog Story Content</label>
+                <q-btn
+                  unevaluated
+                  no-caps
+                  class="ai-action-btn"
+                  :loading="aiBlogLoading"
+                  @click="aiFixGrammar"
+                >
+                  <div class="row items-center no-wrap q-gutter-x-xs">
+                    <q-icon name="auto_awesome" size="14px" />
+                    <span>AI Fix Grammar</span>
+                  </div>
+                </q-btn>
               </div>
-              <div class="editor-wrapper border-grey-4">
+              <p class="text-caption text-sub q-mt-none q-mb-sm">
+                Edit your story and format it with the dynamic editor toolbar as desired.
+              </p>
+              <div class="editor-wrapper">
                 <textarea ref="editorRef"></textarea>
               </div>
             </div>
@@ -96,7 +155,8 @@
               color="primary"
               label="Save Changes"
               no-caps
-              class="full-width q-py-md text-weight-bold rounded-borders q-mt-lg"
+              unevaluated
+              class="publish-btn full-width q-py-md text-weight-bold rounded-borders shadow-sm"
               :loading="submitLoading"
             />
           </q-form>
@@ -127,6 +187,9 @@ const blogId = computed(() => route.params.id as string);
 
 const initLoading = ref(true);
 const submitLoading = ref(false);
+const aiTitleLoading = ref(false);
+const aiDescLoading = ref(false);
+const aiBlogLoading = ref(false);
 
 const imageFile = ref<File | null>(null);
 const existingImage = ref<string | null>(null);
@@ -143,6 +206,67 @@ const formData = reactive({
 
 function handleFileChange(file: File | null) {
   formData.image = file;
+}
+
+async function aiImproveTitle() {
+  aiTitleLoading.value = true;
+  try {
+    const { data } = await axios.post(`${author_service}/api/v1/ai/title`, {
+      text: formData.title,
+    });
+    formData.title = data as string;
+  } catch (error) {
+    Notify.create({
+      type: 'negative',
+      message: 'Problem while generating title via AI',
+      position: 'top',
+    });
+    console.error(error);
+  } finally {
+    aiTitleLoading.value = false;
+  }
+}
+
+async function aiImproveDescription() {
+  aiDescLoading.value = true;
+  try {
+    const { data } = await axios.post(`${author_service}/api/v1/ai/description`, {
+      title: formData.title,
+      description: formData.description,
+    });
+    formData.description = data as string;
+  } catch (error) {
+    Notify.create({
+      type: 'negative',
+      message: 'Problem while generating description via AI',
+      position: 'top',
+    });
+    console.error(error);
+  } finally {
+    aiDescLoading.value = false;
+  }
+}
+
+async function aiFixGrammar() {
+  aiBlogLoading.value = true;
+  try {
+    const { data } = await axios.post(`${author_service}/api/v1/ai/blog`, {
+      blog: formData.blogcontent,
+    });
+    formData.blogcontent = data.html as string;
+    if (joditInstance) {
+      joditInstance.value = data.html as string;
+    }
+  } catch (error) {
+    Notify.create({
+      type: 'negative',
+      message: 'Problem while fixing grammar via AI',
+      position: 'top',
+    });
+    console.error(error);
+  } finally {
+    aiBlogLoading.value = false;
+  }
 }
 
 async function fetchBlogDetails() {
@@ -248,31 +372,59 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.initial-loading-container {
+  min-height: 70vh;
+}
+
 .new-blog-container {
-  max-width: 800px;
+  max-width: 820px;
   margin: 0 auto;
 }
 
-.blog-card {
-  border-radius: 16px;
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+.blog-create-card {
+  border-radius: var(--radius-lg);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
 }
 
-.font-brand {
-  font-family: 'Outfit', 'Inter', sans-serif;
-  letter-spacing: -0.5px;
+.ai-action-btn {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(236, 72, 153, 0.08));
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  color: var(--q-primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  min-height: auto;
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+
+.ai-action-btn:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(236, 72, 153, 0.15));
+  border-color: var(--q-primary);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.1);
+}
+
+.preview-img-wrapper {
+  max-width: 200px;
+  max-height: 125px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
 }
 
 .cover-preview {
-  max-width: 260px;
-  max-height: 160px;
-  border-radius: 8px;
+  max-width: 200px;
+  max-height: 125px;
 }
 
 .editor-wrapper {
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
   overflow: hidden;
+}
+
+.publish-btn {
+  font-size: 1rem;
 }
 </style>

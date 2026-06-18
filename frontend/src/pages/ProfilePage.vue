@@ -1,19 +1,18 @@
 <template>
-  <q-page class="flex flex-center q-pa-md bg-grey-1">
-    <div v-if="store.loading || localLoading">
+  <q-page class="flex flex-center q-pa-md bg-app-container">
+    <div v-if="store.loading || localLoading" class="initial-loading">
       <loading-spinner />
     </div>
 
     <div v-else-if="store.user" class="profile-container full-width">
-      <q-card flat borderless class="profile-card shadow-15 q-pa-lg">
-        <q-card-section class="text-center">
-          <div class="text-h5 text-bold font-brand text-grey-9 q-mb-md">Profile</div>
-        </q-card-section>
+      <q-card flat class="profile-card shadow-lg overflow-hidden">
+        <!-- Dashboard Top Cover Banner (Gradient) -->
+        <div class="profile-cover-banner"></div>
 
-        <q-card-section class="column items-center q-gutter-y-md">
-          <!-- Clickable Avatar to Upload Pic -->
-          <div class="avatar-wrapper relative-position cursor-pointer" @click="triggerFileInput">
-            <q-avatar size="110px" class="profile-avatar shadow-4">
+        <q-card-section class="column items-center profile-content-section relative-position q-px-lg q-pb-xl">
+          <!-- Clickable Overlapping Avatar with Camera Hover Edit Icon -->
+          <div class="avatar-wrapper shadow-md cursor-pointer" @click="triggerFileInput">
+            <q-avatar size="120px" class="profile-avatar">
               <img :src="store.user.image || '/default-avatar.png'" alt="profile" />
             </q-avatar>
             <div class="avatar-overlay flex flex-center">
@@ -28,60 +27,67 @@
             />
           </div>
 
-          <!-- User Name -->
-          <div class="text-h6 text-weight-bold text-grey-9 text-center">
+          <!-- User Info Details -->
+          <div class="text-h5 text-bold font-brand text-main text-center q-mt-md q-mb-xs">
             {{ store.user.name }}
+          </div>
+          <div class="text-caption text-sub text-center q-mb-md font-brand">
+            {{ store.user.email }}
           </div>
 
           <!-- User Bio -->
-          <div v-if="store.user.bio" class="text-body1 text-grey-7 text-center max-width-md">
+          <div v-if="store.user.bio" class="text-body2 text-muted text-center max-width-md q-mb-lg leading-relaxed">
             {{ store.user.bio }}
           </div>
+          <div v-else class="text-body2 text-sub italic text-center max-width-md q-mb-lg">
+            No bio written yet. Add one in your profile settings!
+          </div>
 
-          <!-- Social Links -->
-          <div class="row q-gutter-x-md q-mt-sm">
+          <!-- Social Links (Minimalist slate icons with custom color transitions) -->
+          <div class="row q-gutter-x-md q-mb-lg">
             <a
               v-if="store.user.instagram"
               :href="store.user.instagram"
               target="_blank"
-              class="social-link instagram"
+              class="social-icon-btn instagram-btn"
             >
-              <q-icon name="camera_alt" size="sm" />
+              <q-icon name="camera_alt" size="xs" />
             </a>
             <a
               v-if="store.user.facebook"
               :href="store.user.facebook"
               target="_blank"
-              class="social-link facebook"
+              class="social-icon-btn facebook-btn"
             >
-              <q-icon name="facebook" size="sm" />
+              <q-icon name="facebook" size="xs" />
             </a>
             <a
               v-if="store.user.linkedin"
               :href="store.user.linkedin"
               target="_blank"
-              class="social-link linkedin"
+              class="social-icon-btn linkedin-btn"
             >
-              <q-icon name="work" size="sm" />
+              <q-icon name="work" size="xs" />
             </a>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="row q-gutter-md q-mt-lg">
+          <!-- Dashboard Action Controls -->
+          <div class="row q-gutter-md">
             <q-btn
               unevaluated
               color="primary"
-              label="Add Blog"
+              label="Create Post"
+              icon="add"
               to="/blog/new"
               no-caps
-              class="rounded-borders q-px-lg"
+              class="rounded-borders q-px-lg text-weight-bold shadow-sm"
             />
             <q-btn
               outlined
-              color="grey-7"
               label="Edit Profile"
+              icon="settings"
               no-caps
-              class="rounded-borders q-px-lg"
+              class="rounded-borders q-px-lg profile-settings-btn text-weight-bold text-muted"
               @click="openEditDialog"
             />
           </div>
@@ -91,66 +97,63 @@
 
     <!-- Edit Profile Dialog -->
     <q-dialog v-model="editDialogOpen" backdrop-filter="blur(4px)">
-      <q-card style="width: 450px; max-width: 90vw" class="rounded-borders q-pa-md shadow-24">
+      <q-card style="width: 460px; max-width: 90vw" class="rounded-borders q-pa-md shadow-24 edit-profile-modal">
         <q-card-section class="row items-center q-pb-none">
-          <div class="text-h6 text-bold font-brand text-grey-9">Edit Profile</div>
+          <div class="text-h6 text-bold font-brand text-main">Edit Profile Settings</div>
           <q-space />
-          <q-btn flat round dense icon="close" v-close-popup />
+          <q-btn flat round dense icon="close" class="text-sub" v-close-popup />
         </q-card-section>
 
-        <q-card-section class="q-gutter-y-sm">
+        <q-card-section class="q-gutter-y-md q-pt-md">
           <div>
-            <label class="text-caption text-weight-bold text-grey-7">Name</label>
-            <q-input outlined dense v-model="formData.name" placeholder="Name" class="q-mt-xs" />
+            <label class="text-caption text-weight-bold text-main block q-mb-xs">Display Name</label>
+            <q-input outlined dense v-model="formData.name" placeholder="E.g. Jane Doe" />
           </div>
 
           <div>
-            <label class="text-caption text-weight-bold text-grey-7">Bio</label>
-            <q-input outlined dense v-model="formData.bio" placeholder="Bio" class="q-mt-xs" />
+            <label class="text-caption text-weight-bold text-main block q-mb-xs">About / Bio</label>
+            <q-input outlined dense type="textarea" rows="2" v-model="formData.bio" placeholder="Write a short summary about yourself..." />
           </div>
 
           <div>
-            <label class="text-caption text-weight-bold text-grey-7">Instagram URL</label>
+            <label class="text-caption text-weight-bold text-main block q-mb-xs">Instagram Handle/URL</label>
             <q-input
               outlined
               dense
               v-model="formData.instagram"
               placeholder="https://instagram.com/username"
-              class="q-mt-xs"
             />
           </div>
 
           <div>
-            <label class="text-caption text-weight-bold text-grey-7">Facebook URL</label>
+            <label class="text-caption text-weight-bold text-main block q-mb-xs">Facebook Profile URL</label>
             <q-input
               outlined
               dense
               v-model="formData.facebook"
               placeholder="https://facebook.com/username"
-              class="q-mt-xs"
             />
           </div>
 
           <div>
-            <label class="text-caption text-weight-bold text-grey-7">LinkedIn URL</label>
+            <label class="text-caption text-weight-bold text-main block q-mb-xs">LinkedIn Profile URL</label>
             <q-input
               outlined
               dense
               v-model="formData.linkedin"
               placeholder="https://linkedin.com/in/username"
-              class="q-mt-xs"
             />
           </div>
         </q-card-section>
 
-        <q-card-actions align="right" class="q-px-md">
-          <q-btn flat label="Cancel" color="grey-6" v-close-popup no-caps />
+        <q-card-actions align="right" class="q-px-md q-pt-md">
+          <q-btn flat label="Cancel" color="grey-6" v-close-popup no-caps class="text-weight-bold" />
           <q-btn
             unevaluated
-            label="Save Changes"
+            label="Save Settings"
             color="primary"
             no-caps
-            class="q-px-md"
+            class="q-px-lg text-weight-bold rounded-borders shadow-sm"
             @click="handleSave"
           />
         </q-card-actions>
@@ -276,7 +279,6 @@ onMounted(async () => {
     void router.replace('/login');
     return;
   }
-  // Wait if app is loading
   if (store.loading) {
     await store.fetchUser();
   }
@@ -286,28 +288,37 @@ onMounted(async () => {
 
 <style scoped>
 .profile-container {
-  max-width: 550px;
+  max-width: 600px;
 }
 
 .profile-card {
-  border-radius: 16px;
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-lg);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
 }
 
-.font-brand {
-  font-family: 'Outfit', 'Inter', sans-serif;
-  letter-spacing: -0.5px;
+/* cover banner layout styling */
+.profile-cover-banner {
+  height: 140px;
+  background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+  width: 100%;
+}
+
+.profile-content-section {
+  margin-top: -60px; /* pull avatar up overlap cover */
 }
 
 .avatar-wrapper {
   position: relative;
   border-radius: 50%;
+  border: 5px solid var(--bg-card);
   overflow: hidden;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background-color: var(--bg-card);
 }
 
-.profile-avatar {
-  border: 4px solid #f3f4f6;
+.avatar-wrapper:hover {
+  transform: scale(1.03);
 }
 
 .avatar-overlay {
@@ -316,9 +327,9 @@ onMounted(async () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.25s ease;
   border-radius: 50%;
 }
 
@@ -326,23 +337,28 @@ onMounted(async () => {
   opacity: 1;
 }
 
-.social-link {
+/* Social Icon Buttons styling */
+.social-icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  color: white;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-card);
   text-decoration: none;
-  transition: transform 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.social-link:hover {
+.social-icon-btn:hover {
   transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+  color: white;
 }
 
-.instagram {
+.instagram-btn:hover {
   background: radial-gradient(
     circle at 30% 107%,
     #fdf497 0%,
@@ -351,17 +367,41 @@ onMounted(async () => {
     #d6249f 60%,
     #285aeb 90%
   );
+  border-color: transparent;
 }
 
-.facebook {
-  background: #1877f2;
+.facebook-btn:hover {
+  background-color: #1877f2;
+  border-color: #1877f2;
 }
 
-.linkedin {
-  background: #0a66c2;
+.linkedin-btn:hover {
+  background-color: #0a66c2;
+  border-color: #0a66c2;
+}
+
+.profile-settings-btn {
+  border-color: var(--border-color) !important;
+}
+
+.profile-settings-btn:hover {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+body.body--dark .profile-settings-btn:hover {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+.edit-profile-modal {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-color);
 }
 
 .max-width-md {
-  max-width: 320px;
+  max-width: 400px;
+}
+
+.initial-loading {
+  z-index: 2;
 }
 </style>

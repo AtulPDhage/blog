@@ -1,56 +1,60 @@
 <template>
-  <q-page class="flex flex-center q-pa-md bg-grey-1">
-    <div v-if="loading">
+  <q-page class="flex flex-center q-pa-md bg-app-container">
+    <div v-if="loading" class="initial-loading">
       <loading-spinner />
     </div>
 
     <div v-else-if="user" class="profile-container full-width">
-      <q-card flat borderless class="profile-card shadow-15 q-pa-lg">
-        <q-card-section class="text-center">
-          <div class="text-h5 text-bold font-brand text-grey-9 q-mb-md">Profile</div>
-        </q-card-section>
+      <q-card flat class="profile-card shadow-lg overflow-hidden">
+        <!-- Dashboard Top Cover Banner (Gradient) -->
+        <div class="profile-cover-banner"></div>
 
-        <q-card-section class="column items-center q-gutter-y-md">
+        <q-card-section class="column items-center profile-content-section relative-position q-px-lg q-pb-xl">
           <!-- Avatar -->
-          <q-avatar size="110px" class="profile-avatar shadow-4">
-            <img :src="user.image || '/default-avatar.png'" alt="profile" />
-          </q-avatar>
+          <div class="avatar-wrapper shadow-md">
+            <q-avatar size="120px" class="profile-avatar">
+              <img :src="user.image || '/default-avatar.png'" alt="profile" />
+            </q-avatar>
+          </div>
 
           <!-- User Name -->
-          <div class="text-h6 text-weight-bold text-grey-9 text-center">
+          <div class="text-h5 text-bold font-brand text-main text-center q-mt-md q-mb-xs">
             {{ user.name }}
           </div>
 
           <!-- User Bio -->
-          <div v-if="user.bio" class="text-body1 text-grey-7 text-center max-width-md">
+          <div v-if="user.bio" class="text-body2 text-muted text-center max-width-md q-mb-lg leading-relaxed">
             {{ user.bio }}
+          </div>
+          <div v-else class="text-body2 text-sub italic text-center max-width-md q-mb-lg">
+            No bio details shared by this author.
           </div>
 
           <!-- Social Links -->
-          <div class="row q-gutter-x-md q-mt-sm">
+          <div class="row q-gutter-x-md">
             <a
               v-if="user.instagram"
               :href="user.instagram"
               target="_blank"
-              class="social-link instagram"
+              class="social-icon-btn instagram-btn"
             >
-              <q-icon name="camera_alt" size="sm" />
+              <q-icon name="camera_alt" size="xs" />
             </a>
             <a
               v-if="user.facebook"
               :href="user.facebook"
               target="_blank"
-              class="social-link facebook"
+              class="social-icon-btn facebook-btn"
             >
-              <q-icon name="facebook" size="sm" />
+              <q-icon name="facebook" size="xs" />
             </a>
             <a
               v-if="user.linkedin"
               :href="user.linkedin"
               target="_blank"
-              class="social-link linkedin"
+              class="social-icon-btn linkedin-btn"
             >
-              <q-icon name="work" size="sm" />
+              <q-icon name="work" size="xs" />
             </a>
           </div>
         </q-card-section>
@@ -93,41 +97,60 @@ onMounted(() => {
 
 <style scoped>
 .profile-container {
-  max-width: 550px;
+  max-width: 600px;
 }
 
 .profile-card {
-  border-radius: 16px;
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-lg);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
 }
 
-.font-brand {
-  font-family: 'Outfit', 'Inter', sans-serif;
-  letter-spacing: -0.5px;
+/* cover banner layout styling */
+.profile-cover-banner {
+  height: 140px;
+  background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+  width: 100%;
+}
+
+.profile-content-section {
+  margin-top: -60px; /* pull avatar up overlap cover */
+}
+
+.avatar-wrapper {
+  position: relative;
+  border-radius: 50%;
+  border: 5px solid var(--bg-card);
+  overflow: hidden;
+  background-color: var(--bg-card);
 }
 
 .profile-avatar {
-  border: 4px solid #f3f4f6;
+  border: none;
 }
 
-.social-link {
+/* Social Icon Buttons styling */
+.social-icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  color: white;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-card);
   text-decoration: none;
-  transition: transform 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.social-link:hover {
+.social-icon-btn:hover {
   transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+  color: white;
 }
 
-.instagram {
+.instagram-btn:hover {
   background: radial-gradient(
     circle at 30% 107%,
     #fdf497 0%,
@@ -136,17 +159,24 @@ onMounted(() => {
     #d6249f 60%,
     #285aeb 90%
   );
+  border-color: transparent;
 }
 
-.facebook {
-  background: #1877f2;
+.facebook-btn:hover {
+  background-color: #1877f2;
+  border-color: #1877f2;
 }
 
-.linkedin {
-  background: #0a66c2;
+.linkedin-btn:hover {
+  background-color: #0a66c2;
+  border-color: #0a66c2;
 }
 
 .max-width-md {
-  max-width: 320px;
+  max-width: 400px;
+}
+
+.initial-loading {
+  z-index: 2;
 }
 </style>

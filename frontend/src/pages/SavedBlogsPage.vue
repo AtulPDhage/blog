@@ -1,37 +1,44 @@
 <template>
-  <q-page class="q-py-lg q-px-md">
+  <q-page class="q-py-xl q-px-md bg-app-container">
     <!-- Loading State -->
-    <div v-if="store.loading || !store.blogs || !store.savedBlogs" class="flex flex-center">
+    <div v-if="store.loading || !store.blogs || !store.savedBlogs" class="flex flex-center initial-loading-container">
       <loading-spinner />
     </div>
 
     <div v-else class="container mx-auto max-width-xl">
       <!-- Title -->
-      <h1 class="text-h4 text-bold q-my-md font-brand text-grey-9">Saved Blogs</h1>
+      <h1 class="text-h4 text-bold q-my-none q-mb-xl font-brand text-main">Saved Bookmarks</h1>
 
       <!-- Filtered Saved Blogs Grid -->
-      <div v-if="filteredBlogs.length > 0" class="row q-col-gutter-md">
-        <div v-for="blog in filteredBlogs" :key="blog.id" class="col-12 col-sm-6 col-md-4 col-lg-3">
+      <div v-if="filteredBlogs.length > 0" class="blogs-grid">
+        <div v-for="blog in filteredBlogs" :key="blog.id" class="blog-grid-item">
           <blog-card
             :id="blog.id"
             :image="blog.image"
             :title="blog.title"
             :desc="blog.description"
             :time="blog.created_at"
+            :category="blog.category"
           />
         </div>
       </div>
 
       <!-- Empty State -->
-      <div v-else class="column items-center q-py-xl text-grey-6 text-center">
-        <q-icon name="bookmark_border" size="64px" class="q-mb-md" />
-        <p class="text-h6 text-weight-regular">No saved blogs yet!</p>
+      <div v-else class="empty-container column items-center justify-center text-center q-py-xl">
+        <div class="empty-icon-wrapper q-mb-lg flex flex-center">
+          <q-icon name="bookmark_border" size="40px" class="text-primary" />
+        </div>
+        <h2 class="text-h5 text-bold q-mt-none q-mb-xs font-brand text-main">No bookmarks saved</h2>
+        <p class="text-body1 text-muted max-width-xs q-mb-lg">
+          Articles you bookmark will be displayed here for quick reading later.
+        </p>
         <q-btn
+          unevaluated
           color="primary"
           to="/blogs"
-          label="Browse Blogs"
+          label="Browse Articles"
           no-caps
-          class="q-mt-sm rounded-borders"
+          class="q-px-lg rounded-borders text-weight-bold shadow-sm"
         />
       </div>
     </div>
@@ -67,13 +74,59 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.initial-loading-container {
+  min-height: 70vh;
+}
+
 .max-width-xl {
-  max-width: 1200px;
+  max-width: 1300px;
   margin: 0 auto;
 }
 
-.font-brand {
-  font-family: 'Outfit', 'Inter', sans-serif;
-  letter-spacing: -0.5px;
+/* Responsive CSS Grid */
+.blogs-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 28px;
+  width: 100%;
+}
+
+.blog-grid-item {
+  min-width: 0;
+}
+
+/* Empty State Polish */
+.empty-container {
+  min-height: 40vh;
+}
+
+.empty-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-xl);
+  background-color: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.max-width-xs {
+  max-width: 340px;
+}
+
+@media (min-width: 600px) {
+  .blogs-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 960px) {
+  .blogs-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .blogs-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 </style>

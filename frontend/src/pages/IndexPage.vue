@@ -1,24 +1,38 @@
 <template>
-  <q-page class="home-page q-py-lg q-px-md">
-    <!-- Main Loader -->
-    <!-- Blogs Content Grid -->
-    <div v-if="store.blogLoading && (!store.blogs || store.blogs.length === 0)">
-      <loading-spinner />
-    </div>
-
-    <div v-else class="home-container max-width-xl">
-      <!-- Title & Filter Toggle Header -->
-      <div class="home-header row justify-between items-center q-mb-lg">
-        <h1 class="text-h4 text-bold q-my-none font-brand text-grey-9">
+  <q-page class="home-page q-py-xl q-px-md">
+    <!-- Initial Loading State with Skeleton Grids -->
+    <div v-if="store.blogLoading && (!store.blogs || store.blogs.length === 0)" class="home-container max-width-xl">
+      <div class="home-header row justify-between items-center q-mb-xl">
+        <h1 class="text-h4 text-bold q-my-none font-brand text-main">
           {{ store.category ? `${store.category} Blogs` : 'Latest Blogs' }}
         </h1>
         <q-btn
           flat
-          color="primary"
           icon="filter_list"
-          label="Filter Blogs"
+          label="Filters"
           no-caps
-          class="q-px-md filter-btn rounded-borders"
+          class="filter-btn text-weight-bold"
+          @click="toggleFilter"
+        />
+      </div>
+      <div class="blogs-grid">
+        <skeleton-loader v-for="n in 8" :key="'init-skeleton-' + n" />
+      </div>
+    </div>
+
+    <!-- Main Blogs Content Grid -->
+    <div v-else class="home-container max-width-xl">
+      <!-- Title & Filter Toggle Header -->
+      <div class="home-header row justify-between items-center q-mb-xl">
+        <h1 class="text-h4 text-bold q-my-none font-brand text-main">
+          {{ store.category ? `${store.category} Blogs` : 'Latest Blogs' }}
+        </h1>
+        <q-btn
+          flat
+          icon="filter_list"
+          label="Filters"
+          no-caps
+          class="filter-btn text-weight-bold"
           @click="toggleFilter"
         />
       </div>
@@ -26,45 +40,53 @@
       <!-- Empty Feed State -->
       <div
         v-if="!store.blogs || store.blogs.length === 0"
-        class="column items-center q-py-xl text-grey-6 text-center"
+        class="empty-container column items-center justify-center text-center q-py-xl"
       >
-        <q-icon name="article" size="64px" class="q-mb-md" />
-        <p class="text-h6 text-weight-regular">No blogs found yet!</p>
+        <div class="empty-icon-wrapper q-mb-lg flex flex-center">
+          <q-icon name="article" size="40px" class="text-primary" />
+        </div>
+        <h2 class="text-h5 text-bold q-mt-none q-mb-xs font-brand text-main">No blogs found</h2>
+        <p class="text-body1 text-muted max-width-xs q-mb-lg">
+          We couldn't find any blogs matching your search query or selected category.
+        </p>
         <q-btn
           v-if="store.isAuth"
+          unevaluated
           color="primary"
           to="/blog/new"
-          label="Write the first one"
+          label="Write your first post"
           no-caps
-          class="q-mt-sm rounded-borders"
+          class="q-px-lg rounded-borders text-weight-bold"
+        />
+        <q-btn
+          v-else
+          outlined
+          color="primary"
+          label="Go back to all blogs"
+          no-caps
+          class="q-px-lg rounded-borders text-weight-bold"
+          @click="resetFilters"
         />
       </div>
 
       <!-- Infinite Scroll Cards Feed Grid -->
       <q-infinite-scroll v-else @load="loadMore" :offset="250" ref="infiniteScrollRef">
-        <q-virtual-scroll
-          type="list"
-          :items="blogRows"
-          :virtual-scroll-item-size="380"
-          scroll-target="body"
-        >
-          <template v-slot="{ item: row, index }">
-            <div :key="index" class="blogs-grid q-mb-md">
-              <div v-for="blog in row" :key="blog.id" class="blog-grid-item">
-                <blog-card
-                  :id="blog.id"
-                  :image="blog.image"
-                  :title="blog.title"
-                  :desc="blog.description"
-                  :time="blog.created_at"
-                />
-              </div>
-            </div>
-          </template>
-        </q-virtual-scroll>
+        <div class="blogs-grid">
+          <div v-for="blog in store.blogs" :key="blog.id" class="blog-grid-item">
+            <blog-card
+              :id="blog.id"
+              :image="blog.image"
+              :title="blog.title"
+              :desc="blog.description"
+              :time="blog.created_at"
+              :category="blog.category"
+            />
+          </div>
+        </div>
+
         <template v-slot:loading>
-          <div class="row justify-center q-my-md">
-            <q-spinner-dots color="primary" size="40px" />
+          <div class="blogs-grid q-mt-lg">
+            <skeleton-loader v-for="n in 4" :key="'load-skeleton-' + n" />
           </div>
         </template>
       </q-infinite-scroll>
@@ -73,38 +95,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue';
-import { useQuasar } from 'quasar';
+import { ref, watch, nextTick } from 'vue';
 import { useAppStore } from '@/stores/app';
 import BlogCard from '@/components/BlogCard.vue';
-import LoadingSpinner from '@/components/LoadingSpinner.vue';
+import SkeletonLoader from '@/components/SkeletonLoader.vue';
 
 const store = useAppStore();
-const $q = useQuasar();
 
 const limit = 12;
 const hasMore = ref(true);
 const infiniteScrollRef = ref<{ resume: () => void; trigger: () => void } | null>(null);
 
-const columnsCount = computed(() => {
-  if ($q.screen.gt.md) return 4;
-  if ($q.screen.gt.sm) return 3;
-  if ($q.screen.gt.xs) return 2;
-  return 1;
-});
-
-const blogRows = computed(() => {
-  const blogs = store.blogs || [];
-  const size = columnsCount.value;
-  const chunked = [];
-  for (let i = 0; i < blogs.length; i += size) {
-    chunked.push(blogs.slice(i, i + size));
-  }
-  return chunked;
-});
-
 function toggleFilter() {
   store.leftDrawerOpen = !store.leftDrawerOpen;
+}
+
+function resetFilters() {
+  store.setCategory('');
+  store.setSearchQuery('');
 }
 
 async function loadMore(index: number, done: (stop?: boolean) => void) {
@@ -159,7 +167,7 @@ watch(
 }
 
 .max-width-xl {
-  max-width: 1200px;
+  max-width: 1300px;
   margin: 0 auto;
 }
 
@@ -167,29 +175,63 @@ watch(
   gap: 12px;
 }
 
-.font-brand {
-  font-family: 'Outfit', 'Inter', sans-serif;
-  letter-spacing: -0.5px;
-}
-
 .filter-btn {
-  border: 1px solid rgba(25, 118, 210, 0.2);
-  background: rgba(25, 118, 210, 0.04);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  transition: all 0.2s ease;
 }
 
+.filter-btn:hover {
+  background-color: rgba(99, 102, 241, 0.05);
+  border-color: var(--q-primary);
+  color: var(--q-primary);
+}
+
+/* Responsive CSS Grid */
 .blogs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 28px;
   width: 100%;
-  min-width: 0;
 }
 
 .blog-grid-item {
   min-width: 0;
 }
 
-@media (min-width: 1440px) {
+/* Empty State Polish */
+.empty-container {
+  min-height: 40vh;
+}
+
+.empty-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-xl);
+  background-color: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.max-width-xs {
+  max-width: 340px;
+}
+
+@media (min-width: 600px) {
+  .blogs-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 960px) {
+  .blogs-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
   .blogs-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -199,10 +241,12 @@ watch(
   .home-header {
     align-items: flex-start;
     flex-direction: column;
+    margin-bottom: 24px;
   }
 
   .filter-btn {
-    align-self: flex-start;
+    align-self: stretch;
+    text-align: center;
   }
 }
 </style>
