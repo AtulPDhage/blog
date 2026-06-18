@@ -1,1 +1,77 @@
 /* app global css */
+
+html,
+body,
+#q-app {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body.body--dark {
+  background: #0b1220;
+  color: #e5e7eb;
+}
+
+.body--dark .navbar-blur {
+  background: rgba(17, 24, 39, 0.88);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.body--dark .bg-grey-1 {
+  background: #111827 !important;
+}
+
+.body--dark .bg-white,
+.body--dark .blog-card,
+.body--dark .q-menu,
+.body--dark .q-card {
+  background: #1f2937 !important;
+  color: #e5e7eb;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.body--dark .comment-card {
+  background: #111827 !important;
+}
+
+.body--dark .comment-card:hover {
+  background: #172033 !important;
+}
+
+.body--dark .text-grey-9,
+.body--dark .text-grey-8,
+.body--dark .text-grey-7 {
+  color: #e5e7eb !important;
+}
+
+.body--dark .text-grey-6,
+.body--dark .text-grey-5 {
+  color: #9ca3af !important;
+}
+
+.body--dark .nav-link,
+.body--dark .category-item {
+  color: #d1d5db;
+}
+
+.body--dark .nav-link:hover,
+.body--dark .category-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f9fafb;
+}
+
+.body--dark .q-field--outlined .q-field__control::before {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.body--dark .q-field__native,
+.body--dark .q-field__input,
+.body--dark .q-field__label,
+.body--dark .q-field__control,
+.body--dark .q-placeholder {
+  color: #e5e7eb;
+}
+
+.body--dark .q-separator {
+  background: rgba(255, 255, 255, 0.12);
+}

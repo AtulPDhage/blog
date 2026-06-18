@@ -1,8 +1,12 @@
 <template>
   <q-layout view="lHh Lpr lFf">
     <!-- Header with Glassmorphism -->
-    <q-header borderless class="navbar-blur text-grey-9">
-      <q-toolbar class="container q-py-sm">
+    <q-header
+      borderless
+      class="navbar-blur"
+      :class="isDarkMode ? 'navbar-blur--dark text-white' : 'text-grey-9'"
+    >
+      <q-toolbar class="main-toolbar q-py-sm">
         <q-btn
           v-if="isBlogsRoute"
           flat
@@ -10,21 +14,19 @@
           round
           icon="menu"
           aria-label="Menu"
-          class="q-mr-sm"
+          class="filter-menu-btn q-mr-sm gt-xs"
           @click="toggleLeftDrawer"
         />
 
         <q-toolbar-title
-          class="text-bold text-h6 font-brand cursor-pointer"
+          class="app-title text-bold text-h6 font-brand cursor-pointer"
           @click="router.push('/blogs')"
         >
           Postly
         </q-toolbar-title>
 
-        <q-space />
-
-        <!-- Desktop Navigation Menu -->
-        <div class="gt-xs row items-center q-gutter-md">
+        <!-- Desktop Navigation Links -->
+        <div class="nav-links gt-xs row items-center no-wrap q-gutter-sm">
           <q-btn
             flat
             no-caps
@@ -51,6 +53,22 @@
             class="nav-link"
             active-class="nav-link-active"
           />
+        </div>
+
+        <q-space />
+
+        <!-- Desktop Right Actions -->
+        <div class="nav-actions gt-xs row items-center no-wrap q-gutter-sm">
+          <q-btn
+            flat
+            round
+            dense
+            :icon="isDarkMode ? 'light_mode' : 'dark_mode'"
+            :color="isDarkMode ? 'amber-4' : 'grey-7'"
+            @click="toggleDarkMode"
+          >
+            <q-tooltip>{{ isDarkMode ? 'Light mode' : 'Dark mode' }}</q-tooltip>
+          </q-btn>
 
           <q-btn-dropdown
             v-if="store.isAuth && store.user"
@@ -98,9 +116,30 @@
 
         <!-- Mobile Navigation Menu -->
         <div class="lt-sm">
-          <q-btn flat round dense icon="more_vert" class="text-grey-7">
-            <q-menu auto-close class="shadow-15">
-              <q-list style="min-width: 150px">
+          <q-btn
+            flat
+            round
+            dense
+            icon="menu"
+            aria-label="Open navigation menu"
+            :class="isDarkMode ? 'text-white' : 'text-grey-7'"
+          >
+            <q-menu auto-close class="mobile-menu shadow-15" anchor="bottom right" self="top right">
+              <q-list style="min-width: 220px">
+                <q-item v-if="isBlogsRoute" clickable @click="toggleLeftDrawer">
+                  <q-item-section avatar>
+                    <q-icon name="filter_list" size="xs" />
+                  </q-item-section>
+                  <q-item-section>Filter Blogs</q-item-section>
+                </q-item>
+                <q-separator v-if="isBlogsRoute" />
+                <q-item clickable @click="toggleDarkMode">
+                  <q-item-section avatar>
+                    <q-icon :name="isDarkMode ? 'light_mode' : 'dark_mode'" size="xs" />
+                  </q-item-section>
+                  <q-item-section>{{ isDarkMode ? 'Light mode' : 'Dark mode' }}</q-item-section>
+                </q-item>
+                <q-separator />
                 <q-item clickable to="/blogs">
                   <q-item-section>Home</q-item-section>
                 </q-item>
@@ -198,16 +237,19 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useQuasar } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import { useAppStore, blogCategories } from '@/stores/app';
 
 const store = useAppStore();
 const route = useRoute();
 const router = useRouter();
+const $q = useQuasar();
 
 const searchVal = ref(store.searchQuery);
 
 const isBlogsRoute = computed(() => route.path === '/blogs');
+const isDarkMode = computed(() => $q.dark.isActive);
 const categories = blogCategories;
 
 function toggleLeftDrawer() {
@@ -227,7 +269,17 @@ function handleLogout() {
   void router.push('/blogs');
 }
 
+function toggleDarkMode() {
+  const nextValue = !$q.dark.isActive;
+  $q.dark.set(nextValue);
+  localStorage.setItem('postly-theme', nextValue ? 'dark' : 'light');
+}
+
 onMounted(() => {
+  const savedTheme = localStorage.getItem('postly-theme');
+  if (savedTheme) {
+    $q.dark.set(savedTheme === 'dark');
+  }
   void store.initApp();
 });
 </script>
@@ -240,9 +292,42 @@ onMounted(() => {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.navbar-blur--dark {
+  background: rgba(15, 23, 42, 0.94);
+  border-bottom-color: rgba(148, 163, 184, 0.18);
+  box-shadow: 0 1px 18px rgba(0, 0, 0, 0.22);
+}
+
 .font-brand {
   font-family: 'Outfit', 'Inter', sans-serif;
   letter-spacing: -0.5px;
+}
+
+.main-toolbar {
+  width: 100%;
+  min-width: 0;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.app-title {
+  flex: 0 0 auto;
+  min-width: max-content;
+}
+
+.nav-links {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: 18px;
+}
+
+.nav-actions {
+  flex: 0 0 auto;
+  min-width: max-content;
+}
+
+.filter-menu-btn {
+  flex: 0 0 auto;
 }
 
 .nav-link {
@@ -250,6 +335,7 @@ onMounted(() => {
   font-weight: 500;
   border-radius: 8px;
   transition: all 0.2s ease;
+  min-width: 0;
 }
 
 .nav-link:hover {
@@ -257,9 +343,23 @@ onMounted(() => {
   color: #1a202c;
 }
 
+.navbar-blur--dark .nav-link {
+  color: #cbd5e1;
+}
+
+.navbar-blur--dark .nav-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+}
+
 .nav-link-active {
   color: var(--q-primary) !important;
-  background: rgba(var(--q-primary), 0.08);
+  background: rgba(25, 118, 210, 0.08);
+}
+
+.navbar-blur--dark .nav-link-active {
+  color: #60a5fa !important;
+  background: rgba(96, 165, 250, 0.16);
 }
 
 .category-item {
@@ -284,5 +384,20 @@ onMounted(() => {
 
 .profile-dropdown :deep(.q-btn__content) {
   min-height: auto;
+}
+
+.mobile-menu {
+  border-radius: 10px;
+}
+
+@media (max-width: 599px) {
+  .main-toolbar {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .app-title {
+    flex: 1 1 auto;
+  }
 }
 </style>

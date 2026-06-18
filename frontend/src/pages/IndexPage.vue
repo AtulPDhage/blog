@@ -1,13 +1,13 @@
 <template>
-  <q-page class="q-py-lg q-px-md">
+  <q-page class="home-page q-py-lg q-px-md">
     <!-- Main Loader -->
     <div v-if="store.loading">
       <loading-spinner />
     </div>
 
-    <div v-else class="container mx-auto max-width-xl">
+    <div v-else class="home-container max-width-xl">
       <!-- Title & Filter Toggle Header -->
-      <div class="row justify-between items-center q-mb-lg">
+      <div class="home-header row justify-between items-center q-mb-lg">
         <h1 class="text-h4 text-bold q-my-none font-brand text-grey-9">
           {{ store.category ? `${store.category} Blogs` : 'Latest Blogs' }}
         </h1>
@@ -46,8 +46,8 @@
         </div>
 
         <!-- Cards Feed Grid -->
-        <div v-else class="row q-col-gutter-md">
-          <div v-for="blog in store.blogs" :key="blog.id" class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <div v-else class="blogs-grid">
+          <div v-for="blog in store.blogs" :key="blog.id" class="blog-grid-item">
             <blog-card
               :id="blog.id"
               :image="blog.image"
@@ -80,9 +80,22 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.home-page {
+  overflow-x: hidden;
+}
+
+.home-container {
+  width: 100%;
+  min-width: 0;
+}
+
 .max-width-xl {
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.home-header {
+  gap: 12px;
 }
 
 .font-brand {
@@ -93,5 +106,34 @@ onMounted(() => {
 .filter-btn {
   border: 1px solid rgba(25, 118, 210, 0.2);
   background: rgba(25, 118, 210, 0.04);
+}
+
+.blogs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.blog-grid-item {
+  min-width: 0;
+}
+
+@media (min-width: 1440px) {
+  .blogs-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 599px) {
+  .home-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .filter-btn {
+    align-self: flex-start;
+  }
 }
 </style>
