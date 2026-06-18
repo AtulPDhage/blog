@@ -32,43 +32,55 @@ const (
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		);`
 
+	CreateLikedBlogsTableQuery = `
+		CREATE TABLE IF NOT EXISTS likedblogs(
+			id SERIAL PRIMARY KEY,
+			userid VARCHAR(255) NOT NULL,
+			blogid VARCHAR(255) NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		);`
+
+	// Alter query to safely add views column if it does not exist (for existing databases)
+	AlterBlogsAddViewsQuery = `
+		ALTER TABLE blogs ADD COLUMN IF NOT EXISTS views INT DEFAULT 0;`
+
 	// Blog retrieval queries
 	SelectAllBlogsQuery = `
-		SELECT id, title, description, blogcontent, image, category, author, created_at
+		SELECT id, title, description, blogcontent, image, category, author, created_at, views
 		FROM blogs
 		ORDER BY created_at DESC
 		LIMIT $1 OFFSET $2;`
 
 	SelectBlogsByCategoryQuery = `
-		SELECT id, title, description, blogcontent, image, category, author, created_at
+		SELECT id, title, description, blogcontent, image, category, author, created_at, views
 		FROM blogs
 		WHERE category = $1
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3;`
 
 	SelectBlogsBySearchQuery = `
-		SELECT id, title, description, blogcontent, image, category, author, created_at
+		SELECT id, title, description, blogcontent, image, category, author, created_at, views
 		FROM blogs
 		WHERE (title ILIKE $1 OR description ILIKE $1)
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3;`
 
 	SelectBlogsBySearchAndCategoryQuery = `
-		SELECT id, title, description, blogcontent, image, category, author, created_at
+		SELECT id, title, description, blogcontent, image, category, author, created_at, views
 		FROM blogs
 		WHERE (title ILIKE $1 OR description ILIKE $1) AND category = $2
 		ORDER BY created_at DESC
 		LIMIT $3 OFFSET $4;`
 
 	SelectSavedBlogsDetailedByUserIDQuery = `
-		SELECT b.id, b.title, b.description, b.blogcontent, b.image, b.category, b.author, b.created_at
+		SELECT b.id, b.title, b.description, b.blogcontent, b.image, b.category, b.author, b.created_at, b.views
 		FROM savedblogs sb
 		JOIN blogs b ON sb.blogid = CAST(b.id AS VARCHAR)
 		WHERE sb.userid = $1
 		ORDER BY sb.created_at DESC;`
 
 	SelectBlogByIDQuery = `
-		SELECT id, title, description, blogcontent, image, category, author, created_at
+		SELECT id, title, description, blogcontent, image, category, author, created_at, views
 		FROM blogs
 		WHERE id = $1;`
 
@@ -113,4 +125,29 @@ const (
 		FROM savedblogs
 		WHERE userid = $1
 		ORDER BY created_at DESC;`
+
+	// Liked blog queries
+	SelectLikedBlogQuery = `
+		SELECT id, userid, blogid, created_at
+		FROM likedblogs
+		WHERE userid = $1 AND blogid = $2;`
+
+	InsertLikedBlogQuery = `
+		INSERT INTO likedblogs (userid, blogid)
+		VALUES ($1, $2)
+		RETURNING id, userid, blogid, created_at;`
+
+	DeleteLikedBlogQuery = `
+		DELETE FROM likedblogs
+		WHERE userid = $1 AND blogid = $2;`
+
+	SelectLikesCountByBlogIDQuery = `
+		SELECT COUNT(*)
+		FROM likedblogs
+		WHERE blogid = $1;`
+
+	IncrementViewsQuery = `
+		UPDATE blogs
+		SET views = views + 1
+		WHERE id = $1;`
 )

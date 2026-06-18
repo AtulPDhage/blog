@@ -100,6 +100,26 @@ func (m *mockBlogRepository) GetSavedBlogs(ctx context.Context, userID string) (
 	return []models.Blog{}, nil
 }
 
+func (m *mockBlogRepository) GetLikedBlog(ctx context.Context, userID string, blogID string) (*models.LikedBlog, error) {
+	return nil, nil
+}
+
+func (m *mockBlogRepository) LikeBlog(ctx context.Context, userID string, blogID string) (bool, error) {
+	return false, nil
+}
+
+func (m *mockBlogRepository) GetBlogLikesCount(ctx context.Context, blogID string) (int, error) {
+	return 0, nil
+}
+
+func (m *mockBlogRepository) IsBlogLikedByUser(ctx context.Context, userID string, blogID string) (bool, error) {
+	return false, nil
+}
+
+func (m *mockBlogRepository) IncrementBlogViews(ctx context.Context, id int) error {
+	return nil
+}
+
 func TestMain(m *testing.M) {
 	logger.Logger = zap.NewNop()
 	os.Exit(m.Run())

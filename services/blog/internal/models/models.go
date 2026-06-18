@@ -16,6 +16,7 @@ type Blog struct {
 	Category    string    `json:"category"`
 	Author      string    `json:"author"`
 	CreatedAt   time.Time `json:"created_at"`
+	Views       int       `json:"views"`
 }
 
 // Comment represents the PostgreSQL comments schema structure
@@ -30,6 +31,14 @@ type Comment struct {
 
 // SavedBlog represents the PostgreSQL savedblogs schema structure
 type SavedBlog struct {
+	ID        int       `json:"id"`
+	UserID    string    `json:"userid"`
+	BlogID    string    `json:"blogid"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// LikedBlog represents the PostgreSQL likedblogs schema structure
+type LikedBlog struct {
 	ID        int       `json:"id"`
 	UserID    string    `json:"userid"`
 	BlogID    string    `json:"blogid"`

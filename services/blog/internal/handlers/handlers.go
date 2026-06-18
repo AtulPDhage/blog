@@ -66,7 +66,12 @@ func (h *BlogHandler) GetSingleBlog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := h.service.GetSingleBlog(r.Context(), id)
+	var userID string
+	if user, ok := middleware.GetUserFromContext(r.Context()); ok {
+		userID = user.ID
+	}
+
+	resp, err := h.service.GetSingleBlog(r.Context(), id, userID)
 	if err != nil {
 		logger.Logger.Error("GetSingleBlog service call failed", zap.Int("blog_id", id), zap.Error(err))
 		middleware.JsonError(w, http.StatusInternalServerError, "Internal Server Error")
@@ -228,4 +233,40 @@ func (h *BlogHandler) GetSavedBlogs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(blogs)
+}
+
+// LikeBlog handler toggles liking/unliking a blog post
+func (h *BlogHandler) LikeBlog(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		middleware.JsonError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	blogID := chi.URLParam(r, "blogid")
+	if blogID == "" {
+		middleware.JsonError(w, http.StatusBadRequest, "Missing blog ID")
+		return
+	}
+
+	liked, err := h.service.LikeBlog(r.Context(), user.ID, blogID)
+	if err != nil {
+		logger.Logger.Error("LikeBlog service call failed", zap.Error(err))
+		middleware.JsonError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+
+	var msg string
+	if liked {
+		msg = "Blog liked"
+	} else {
+		msg = "Blog unliked"
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": msg,
+		"liked":   liked,
+	})
 }

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"go.uber.org/zap"
@@ -71,76 +72,108 @@ func (s *BlogService) GetAllBlogs(ctx context.Context, searchQuery, category str
 	return blogs, nil
 }
 
-// SingleBlogResponse holds the blog and its author details
+// SingleBlogResponse holds the blog, author details, likes, and liked status
 type SingleBlogResponse struct {
-	Blog   models.Blog `json:"blog"`
-	Author interface{} `json:"author"`
+	Blog       models.Blog `json:"blog"`
+	Author     interface{} `json:"author"`
+	LikesCount int         `json:"likes_count"`
+	Liked      bool        `json:"liked"`
 }
 
 // GetSingleBlog fetches a blog by ID, checks cache, retrieves author details from User microservice, and caches result
-func (s *BlogService) GetSingleBlog(ctx context.Context, id int) (*SingleBlogResponse, error) {
+func (s *BlogService) GetSingleBlog(ctx context.Context, id int, userID string) (*SingleBlogResponse, error) {
+	// 1. Increment views in the database (real-time)
+	_ = s.repo.IncrementBlogViews(ctx, id)
+
 	cacheKey := fmt.Sprintf("blog:%d", id)
+	var finalResp *SingleBlogResponse
 
 	// Check Redis cache
 	cached, err := redis.Get(ctx, cacheKey)
 	if err == nil && cached != "" {
-		var resp SingleBlogResponse
-		if json.Unmarshal([]byte(cached), &resp) == nil {
+		var cachedResp SingleBlogResponse
+		if json.Unmarshal([]byte(cached), &cachedResp) == nil {
 			logger.Logger.Info("Serving single blog from Redis cache", zap.String("key", cacheKey))
-			return &resp, nil
+			finalResp = &cachedResp
 		}
 	}
 
-	// Fallback to DB
-	blog, err := s.repo.GetSingleBlog(ctx, id)
+	if finalResp == nil {
+		// Fallback to DB
+		blog, err := s.repo.GetSingleBlog(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if blog == nil {
+			return nil, nil // Not found
+		}
+
+		logger.Logger.Info("Serving single blog from Database", zap.String("key", cacheKey))
+
+		// Fetch author details from external User service
+		var authorDetails interface{}
+		urlStr := fmt.Sprintf("%s/api/v1/user/%s", s.userServiceURL, blog.Author)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
+		if err == nil {
+			resp, err := s.httpClient.Do(req)
+			if err == nil {
+				defer resp.Body.Close()
+				if resp.StatusCode == http.StatusOK {
+					var parsed interface{}
+					if json.NewDecoder(resp.Body).Decode(&parsed) == nil {
+						authorDetails = parsed
+					}
+				} else {
+					logger.Logger.Warn("User service returned non-200 status", zap.Int("status", resp.StatusCode), zap.String("url", urlStr))
+				}
+			} else {
+				logger.Logger.Error("Failed to request user service", zap.Error(err), zap.String("url", urlStr))
+			}
+		}
+
+		if authorDetails == nil {
+			authorDetails = map[string]interface{}{} // fallback empty map
+		}
+
+		finalResp = &SingleBlogResponse{
+			Blog:   *blog,
+			Author: authorDetails,
+		}
+
+		// Cache result
+		go func() {
+			respJSON, err := json.Marshal(finalResp)
+			if err == nil {
+				cacheCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				_ = redis.Set(cacheCtx, cacheKey, string(respJSON), 3600*time.Second)
+			}
+		}()
+	}
+
+	// 2. Fetch fresh views count from Postgres (real-time)
+	freshBlog, err := s.repo.GetSingleBlog(ctx, id)
+	if err == nil && freshBlog != nil {
+		finalResp.Blog.Views = freshBlog.Views
+	}
+
+	// 3. Fetch likes count (real-time)
+	likesCount, err := s.repo.GetBlogLikesCount(ctx, strconv.Itoa(id))
 	if err != nil {
 		return nil, err
 	}
-	if blog == nil {
-		return nil, nil // Not found
-	}
+	finalResp.LikesCount = likesCount
 
-	logger.Logger.Info("Serving single blog from Database", zap.String("key", cacheKey))
-
-	// Fetch author details from external User service
-	var authorDetails interface{}
-	urlStr := fmt.Sprintf("%s/api/v1/user/%s", s.userServiceURL, blog.Author)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
-	if err == nil {
-		resp, err := s.httpClient.Do(req)
-		if err == nil {
-			defer resp.Body.Close()
-			if resp.StatusCode == http.StatusOK {
-				var parsed interface{}
-				if json.NewDecoder(resp.Body).Decode(&parsed) == nil {
-					authorDetails = parsed
-				}
-			} else {
-				logger.Logger.Warn("User service returned non-200 status", zap.Int("status", resp.StatusCode), zap.String("url", urlStr))
-			}
-		} else {
-			logger.Logger.Error("Failed to request user service", zap.Error(err), zap.String("url", urlStr))
+	// 4. Fetch user-specific liked status (real-time, not cached)
+	if userID != "" {
+		liked, err := s.repo.IsBlogLikedByUser(ctx, userID, strconv.Itoa(id))
+		if err != nil {
+			return nil, err
 		}
+		finalResp.Liked = liked
+	} else {
+		finalResp.Liked = false
 	}
-
-	if authorDetails == nil {
-		authorDetails = map[string]interface{}{} // fallback empty map
-	}
-
-	finalResp := &SingleBlogResponse{
-		Blog:   *blog,
-		Author: authorDetails,
-	}
-
-	// Cache result
-	go func() {
-		respJSON, err := json.Marshal(finalResp)
-		if err == nil {
-			cacheCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			_ = redis.Set(cacheCtx, cacheKey, string(respJSON), 3600*time.Second)
-		}
-	}()
 
 	return finalResp, nil
 }
@@ -191,4 +224,12 @@ func (s *BlogService) GetSavedBlogs(ctx context.Context, userID string) ([]model
 		return nil, errors.New("missing user ID")
 	}
 	return s.repo.GetSavedBlogs(ctx, userID)
+}
+
+// LikeBlog toggles the liked status of a blog
+func (s *BlogService) LikeBlog(ctx context.Context, userID string, blogID string) (bool, error) {
+	if userID == "" || blogID == "" {
+		return false, errors.New("missing user ID or blog ID")
+	}
+	return s.repo.LikeBlog(ctx, userID, blogID)
 }

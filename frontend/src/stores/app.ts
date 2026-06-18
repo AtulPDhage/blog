@@ -24,6 +24,7 @@ export interface Blog {
   category: string;
   author: string;
   created_at: string;
+  views?: number;
 }
 
 export interface SavedBlogType {

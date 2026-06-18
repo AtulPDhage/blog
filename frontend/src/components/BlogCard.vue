@@ -15,6 +15,11 @@
       <div class="row items-center text-sub text-caption q-mb-xs q-gutter-x-xs font-brand text-medium">
         <q-icon name="schedule" size="14px" />
         <span>{{ formattedDate }}</span>
+        <template v-if="views !== undefined">
+          <span>•</span>
+          <q-icon name="visibility" size="14px" />
+          <span>{{ formattedViews }} views</span>
+        </template>
       </div>
 
       <h3 class="text-weight-bold text-subtitle1 q-mt-none q-mb-sm title-ellipsis text-main">
@@ -39,6 +44,7 @@ const props = defineProps<{
   id: string;
   time: string;
   category?: string;
+  views?: number | undefined;
 }>();
 
 const router = useRouter();
@@ -55,6 +61,26 @@ const formattedDate = computed(() => {
 const truncatedDesc = computed(() => {
   if (!props.desc) return '';
   return props.desc.length > 80 ? `${props.desc.slice(0, 80)}...` : props.desc;
+});
+
+const formattedViews = computed(() => {
+  if (props.views === undefined) return '';
+  const count = props.views;
+  if (count < 1000) {
+    return `${count}`;
+  }
+  if (count < 1000000) {
+    const k = count / 1000;
+    if (k < 10) {
+      return `${parseFloat(k.toFixed(1))}K`;
+    }
+    return `${Math.round(k)}K`;
+  }
+  const m = count / 1000000;
+  if (m < 10) {
+    return `${parseFloat(m.toFixed(1))}M`;
+  }
+  return `${Math.round(m)}M`;
 });
 </script>
 

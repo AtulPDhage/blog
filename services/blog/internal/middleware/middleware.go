@@ -67,6 +67,36 @@ func AuthMiddleware(jwtSecret string) func(http.Handler) http.Handler {
 	}
 }
 
+// OptionalAuthMiddleware attempts to parse JWT Bearer tokens but does not block if absent or invalid
+func OptionalAuthMiddleware(jwtSecret string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+			claims := &models.Claims{}
+
+			token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+				}
+				return []byte(jwtSecret), nil
+			})
+
+			if err == nil && token.Valid && claims.User.ID != "" {
+				ctx := context.WithValue(r.Context(), userContextKey, claims.User)
+				r = r.WithContext(ctx)
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 // CORSMiddleware handles cross-origin requests
 func CORSMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {

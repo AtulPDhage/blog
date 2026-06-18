@@ -51,11 +51,13 @@ func InitTables(ctx context.Context) error {
 		CreateBlogsTableQuery,
 		CreateCommentsTableQuery,
 		CreateSavedBlogsTableQuery,
+		CreateLikedBlogsTableQuery,
+		AlterBlogsAddViewsQuery,
 	}
 
 	for _, query := range queries {
 		if _, err := Pool.Exec(ctx, query); err != nil {
-			return fmt.Errorf("error creating database table: %w", err)
+			return fmt.Errorf("error creating database table or column: %w", err)
 		}
 	}
 

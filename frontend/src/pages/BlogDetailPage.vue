@@ -34,28 +34,53 @@
 
           <!-- Author Info & Save/Edit Actions Header -->
           <div class="row items-center justify-between q-mt-lg q-pb-md border-bottom-light q-col-gutter-y-sm">
-            <div class="row items-center q-gutter-x-sm">
+            <!-- Left Side: Author Details -->
+            <div class="row items-center q-gutter-x-md">
               <q-avatar
-                size="40px"
+                size="42px"
                 class="shadow-sm cursor-pointer author-avatar-wrapper"
                 @click="router.push(`/profile/${author?._id}`)"
               >
                 <img :src="author?.image || '/default-avatar.png'" alt="author" />
               </q-avatar>
               
-              <div class="column">
+              <div class="column justify-center">
                 <span
                   class="text-weight-bold text-main cursor-pointer hover-underline text-body2"
                   @click="router.push(`/profile/${author?._id}`)"
                 >
                   {{ author?.name }}
                 </span>
-                <div class="row items-center text-caption text-sub q-gutter-x-xs font-brand">
+                <div class="row items-center text-caption text-sub q-gutter-x-xs font-brand q-mt-xs">
                   <span>{{ formatPublishDate(blog.created_at) }}</span>
                   <span>•</span>
                   <span>{{ readingTime }} min read</span>
+                  <span>•</span>
+                  <q-icon name="visibility" size="14px" />
+                  <span>{{ formattedViews }} views</span>
                 </div>
               </div>
+            </div>
+
+            <!-- Right Side: Interaction & Owner Actions -->
+            <div class="row items-center q-gutter-x-sm">
+              <!-- Like Button -->
+              <q-btn
+                flat
+                no-caps
+                :color="liked ? 'red' : 'grey-5'"
+                class="like-btn q-px-sm rounded-borders"
+                :loading="likeLoading"
+                @click="toggleLikeBlog"
+              >
+                <div class="row items-center no-wrap q-gutter-x-xs">
+                  <q-icon :name="liked ? 'favorite' : 'favorite_border'" size="20px" />
+                  <span class="text-weight-bold text-caption">{{ likesCount }}</span>
+                </div>
+                <q-tooltip class="bg-grey-9 text-white">
+                  {{ liked ? 'Unlike this blog' : 'Like this blog' }}
+                </q-tooltip>
+              </q-btn>
 
               <!-- Bookmark/Save Button -->
               <q-btn
@@ -65,34 +90,37 @@
                 dense
                 :color="saved ? 'primary' : 'grey-5'"
                 :icon="saved ? 'bookmark' : 'bookmark_border'"
-                class="q-ml-sm bookmark-btn"
+                class="bookmark-btn"
                 :loading="saveLoading"
                 @click="toggleSaveBlog"
               >
                 <q-tooltip class="bg-grey-9 text-white">{{ saved ? 'Saved to bookmarks' : 'Bookmark this blog' }}</q-tooltip>
               </q-btn>
-            </div>
 
-            <!-- Author Owner Actions (Edit & Delete) -->
-            <div v-if="blog.author === store.user?._id" class="row items-center q-gutter-x-sm">
-              <q-btn
-                unevaluated
-                color="primary"
-                icon="edit"
-                label="Edit"
-                no-caps
-                class="q-px-md rounded-borders text-weight-bold shadow-sm"
-                :to="`/blog/edit/${blog.id}`"
-              />
-              <q-btn
-                outlined
-                color="negative"
-                icon="delete"
-                label="Delete"
-                no-caps
-                class="q-px-md rounded-borders text-weight-bold"
-                @click="handleDeleteBlog"
-              />
+              <!-- Action Divider -->
+              <span v-if="blog.author === store.user?._id" class="action-divider q-mx-xs"></span>
+
+              <!-- Author Owner Actions (Edit & Delete) -->
+              <div v-if="blog.author === store.user?._id" class="row items-center q-gutter-x-sm">
+                <q-btn
+                  unevaluated
+                  color="primary"
+                  icon="edit"
+                  label="Edit"
+                  no-caps
+                  class="q-px-md rounded-borders text-weight-bold shadow-sm"
+                  :to="`/blog/edit/${blog.id}`"
+                />
+                <q-btn
+                  outlined
+                  color="negative"
+                  icon="delete"
+                  label="Delete"
+                  no-caps
+                  class="q-px-md rounded-borders text-weight-bold"
+                  @click="handleDeleteBlog"
+                />
+              </div>
             </div>
           </div>
         </q-card-section>
@@ -249,6 +277,11 @@ const newComment = ref('');
 const addCommentLoading = ref(false);
 const saveLoading = ref(false);
 
+const likesCount = ref(0);
+const liked = ref(false);
+const views = ref(0);
+const likeLoading = ref(false);
+
 const blogId = computed(() => route.params.id as string);
 
 const sanitizedBlogContent = computed(() => {
@@ -268,12 +301,41 @@ const readingTime = computed(() => {
   return Math.ceil(words / 200) || 1; // 200 words per minute
 });
 
+const formattedViews = computed(() => {
+  const count = views.value;
+  if (count < 1000) {
+    return `${count}`;
+  }
+  if (count < 1000000) {
+    const k = count / 1000;
+    if (k < 10) {
+      return `${parseFloat(k.toFixed(1))}K`;
+    }
+    return `${Math.round(k)}K`;
+  }
+  const m = count / 1000000;
+  if (m < 10) {
+    return `${parseFloat(m.toFixed(1))}M`;
+  }
+  return `${Math.round(m)}M`;
+});
+
 async function fetchBlogDetails() {
   loading.value = true;
   try {
-    const { data } = await axios.get(`${blog_service}/api/v1/blog/${blogId.value}`);
+    const token = Cookies.get('token');
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    const { data } = await axios.get(`${blog_service}/api/v1/blog/${blogId.value}`, {
+      headers,
+    });
     blog.value = data.blog;
     author.value = data.author?.user || null;
+    likesCount.value = data.likes_count || 0;
+    liked.value = data.liked || false;
+    views.value = data.blog?.views || 0;
   } catch (error) {
     console.error('Failed to load blog:', error);
     Notify.create({
@@ -283,6 +345,53 @@ async function fetchBlogDetails() {
     });
   } finally {
     loading.value = false;
+  }
+}
+
+async function toggleLikeBlog() {
+  if (!store.isAuth) {
+    Notify.create({
+      type: 'warning',
+      message: 'Please log in to like this blog post',
+      position: 'top',
+    });
+    return;
+  }
+
+  likeLoading.value = true;
+  try {
+    const token = Cookies.get('token');
+    const { data } = await axios.post(
+      `${blog_service}/api/v1/like/${blogId.value}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    liked.value = data.liked;
+    if (liked.value) {
+      likesCount.value++;
+    } else {
+      likesCount.value = Math.max(0, likesCount.value - 1);
+    }
+
+    Notify.create({
+      type: 'positive',
+      message: data.message || (liked.value ? 'Liked blog post' : 'Unliked blog post'),
+      position: 'top',
+    });
+  } catch (error) {
+    Notify.create({
+      type: 'negative',
+      message: 'Problem while updating like status',
+      position: 'top',
+    });
+    console.error(error);
+  } finally {
+    likeLoading.value = false;
   }
 }
 
@@ -543,6 +652,31 @@ onMounted(async () => {
 
 .bookmark-btn:active {
   transform: scale(0.85);
+}
+
+.action-divider {
+  width: 1px;
+  height: 20px;
+  background-color: var(--border-color);
+  opacity: 0.8;
+  display: inline-block;
+  align-self: center;
+}
+
+.like-btn {
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.like-btn:active {
+  transform: scale(0.85);
+}
+
+.like-btn :deep(.q-icon) {
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.like-btn:hover :deep(.q-icon) {
+  transform: scale(1.15);
 }
 
 .cover-image-wrapper {

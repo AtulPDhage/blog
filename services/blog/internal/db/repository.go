@@ -20,6 +20,12 @@ type BlogRepository interface {
 	GetSavedBlog(ctx context.Context, userID string, blogID string) (*models.SavedBlog, error)
 	SaveBlog(ctx context.Context, userID string, blogID string) (bool, error) // Returns true if saved, false if removed
 	GetSavedBlogs(ctx context.Context, userID string) ([]models.Blog, error)
+	
+	GetLikedBlog(ctx context.Context, userID string, blogID string) (*models.LikedBlog, error)
+	LikeBlog(ctx context.Context, userID string, blogID string) (bool, error) // Returns true if liked, false if unliked
+	GetBlogLikesCount(ctx context.Context, blogID string) (int, error)
+	IsBlogLikedByUser(ctx context.Context, userID string, blogID string) (bool, error)
+	IncrementBlogViews(ctx context.Context, id int) error
 }
 
 type PostgresBlogRepository struct{}
@@ -62,6 +68,7 @@ func (r *PostgresBlogRepository) GetAllBlogs(ctx context.Context, searchQuery, c
 			&b.Category,
 			&b.Author,
 			&b.CreatedAt,
+			&b.Views,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan blog row: %w", err)
@@ -93,6 +100,7 @@ func (r *PostgresBlogRepository) GetSingleBlog(ctx context.Context, id int) (*mo
 		&b.Category,
 		&b.Author,
 		&b.CreatedAt,
+		&b.Views,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -257,6 +265,7 @@ func (r *PostgresBlogRepository) GetSavedBlogs(ctx context.Context, userID strin
 			&b.Category,
 			&b.Author,
 			&b.CreatedAt,
+			&b.Views,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan saved blog row: %w", err)
@@ -273,4 +282,78 @@ func (r *PostgresBlogRepository) GetSavedBlogs(ctx context.Context, userID strin
 	}
 
 	return blogs, nil
+}
+
+// GetLikedBlog checks if a user has liked a blog
+func (r *PostgresBlogRepository) GetLikedBlog(ctx context.Context, userID string, blogID string) (*models.LikedBlog, error) {
+	var lb models.LikedBlog
+	err := Pool.QueryRow(ctx, SelectLikedBlogQuery, userID, blogID).Scan(
+		&lb.ID,
+		&lb.UserID,
+		&lb.BlogID,
+		&lb.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to query liked blog: %w", err)
+	}
+	return &lb, nil
+}
+
+// LikeBlog toggles the liked status of a blog by a user
+func (r *PostgresBlogRepository) LikeBlog(ctx context.Context, userID string, blogID string) (bool, error) {
+	existing, err := r.GetLikedBlog(ctx, userID, blogID)
+	if err != nil {
+		return false, err
+	}
+
+	if existing == nil {
+		var lb models.LikedBlog
+		err := Pool.QueryRow(ctx, InsertLikedBlogQuery, userID, blogID).Scan(
+			&lb.ID,
+			&lb.UserID,
+			&lb.BlogID,
+			&lb.CreatedAt,
+		)
+		if err != nil {
+			return false, fmt.Errorf("failed to insert liked blog: %w", err)
+		}
+		return true, nil
+	} else {
+		_, err := Pool.Exec(ctx, DeleteLikedBlogQuery, userID, blogID)
+		if err != nil {
+			return false, fmt.Errorf("failed to delete liked blog: %w", err)
+		}
+		return false, nil
+	}
+}
+
+// GetBlogLikesCount returns the total number of likes for a blog post
+func (r *PostgresBlogRepository) GetBlogLikesCount(ctx context.Context, blogID string) (int, error) {
+	var count int
+	err := Pool.QueryRow(ctx, SelectLikesCountByBlogIDQuery, blogID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to query likes count: %w", err)
+	}
+	return count, nil
+}
+
+// IsBlogLikedByUser returns true if a user has liked a blog post
+func (r *PostgresBlogRepository) IsBlogLikedByUser(ctx context.Context, userID string, blogID string) (bool, error) {
+	existing, err := r.GetLikedBlog(ctx, userID, blogID)
+	if err != nil {
+		return false, err
+	}
+	return existing != nil, nil
+}
+
+// IncrementBlogViews increments the view count for a blog post
+func (r *PostgresBlogRepository) IncrementBlogViews(ctx context.Context, id int) error {
+	_, err := Pool.Exec(ctx, IncrementViewsQuery, id)
+	if err != nil {
+		return fmt.Errorf("failed to increment blog views: %w", err)
+	}
+	return nil
 }

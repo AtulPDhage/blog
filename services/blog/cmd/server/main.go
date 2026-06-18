@@ -93,7 +93,7 @@ func main() {
 	// Register routes with route groups and specific middleware chains
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/blog/all", handler.GetAllBlogs)
-		r.Get("/blog/{id}", handler.GetSingleBlog)
+		r.With(middleware.OptionalAuthMiddleware(cfg.JWTSecret)).Get("/blog/{id}", handler.GetSingleBlog)
 		r.Get("/comment/{id}", handler.GetAllComments)
 
 		// Authenticated & size-limited routes
@@ -104,6 +104,7 @@ func main() {
 			r.Post("/comment/{id}", handler.AddComment)
 			r.Delete("/comment/{commentid}", handler.DeleteComment)
 			r.Post("/save/{blogid}", handler.SaveBlog)
+			r.Post("/like/{blogid}", handler.LikeBlog)
 			r.Get("/blogs/saved/all", handler.GetSavedBlogs)
 		})
 	})

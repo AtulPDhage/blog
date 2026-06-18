@@ -80,6 +80,7 @@
               :desc="blog.description"
               :time="blog.created_at"
               :category="blog.category"
+              :views="blog.views"
             />
           </div>
         </div>
