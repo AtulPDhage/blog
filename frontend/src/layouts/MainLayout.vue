@@ -37,6 +37,7 @@
           />
 
          <q-btn
+          v-if="store.isAuth"
           flat
           no-caps
           label="Saved Blogs"

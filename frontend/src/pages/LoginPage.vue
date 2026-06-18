@@ -177,11 +177,6 @@ onMounted(() => {
     border-color 0.2s;
 }
 
-.google-btn:hover {
-  background-color: #f8f9fa !important;
-  border-color: #c4c7c5;
-}
-
 .google-icon {
   width: 22px;
   height: 22px;
