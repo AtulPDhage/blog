@@ -33,17 +33,17 @@
             label="Home"
             to="/blogs"
             class="nav-link"
-            active-class="nav-link-active"
+            :class="{ 'nav-link-active': route.path === '/blogs' }"
           />
-          <q-btn
-            v-if="store.isAuth"
-            flat
-            no-caps
-            label="Saved Blogs"
-            to="/blog/saved"
-            class="nav-link"
-            active-class="nav-link-active"
-          />
+
+         <q-btn
+          flat
+          no-caps
+          label="Saved Blogs"
+          to="/blog/saved"
+          class="nav-link"
+          :class="{ 'nav-link-active': route.path === '/blog/saved' }"
+        />
           <q-btn
             v-if="store.isAuth"
             flat
@@ -51,7 +51,7 @@
             label="Create Blog"
             to="/blog/new"
             class="nav-link"
-            active-class="nav-link-active"
+            :class="{ 'nav-link-active': route.path === '/blog/new' }"
           />
         </div>
 
