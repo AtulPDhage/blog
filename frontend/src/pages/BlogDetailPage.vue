@@ -391,6 +391,7 @@ onMounted(async () => {
 <style scoped>
 .blog-detail-container {
   max-width: 800px;
+  margin: 0 auto;
 }
 
 .blog-card {
