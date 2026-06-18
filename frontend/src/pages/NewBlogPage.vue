@@ -17,7 +17,8 @@
                   outlined
                   dense
                   placeholder="Enter Blog title"
-                  required
+                  :rules="[(val) => !!val || 'Title is required']"
+                  lazy-rules
                   class="full-width title-input"
                   :loading="aiTitleLoading"
                 />
@@ -43,7 +44,8 @@
                   outlined
                   dense
                   placeholder="Enter Blog description"
-                  required
+                  :rules="[(val) => !!val || 'Description is required']"
+                  lazy-rules
                   class="full-width desc-input"
                   :loading="aiDescLoading"
                 />
@@ -69,7 +71,8 @@
                 outlined
                 dense
                 placeholder="Select Category"
-                required
+                :rules="[(val) => !!val || 'Category is required']"
+                lazy-rules
                 class="q-mt-xs"
               />
             </div>
@@ -83,6 +86,8 @@
                 dense
                 accept="image/*"
                 placeholder="Click to upload cover image"
+                :rules="[(val) => !!val || 'Cover image is required']"
+                lazy-rules
                 class="q-mt-xs"
                 @update:model-value="handleFileChange"
               >
@@ -322,6 +327,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .new-blog-container {
   max-width: 800px;
+  margin: 0 auto;
 }
 
 .blog-card {
