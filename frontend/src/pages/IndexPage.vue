@@ -124,13 +124,18 @@ async function loadMore(index: number, done: (stop?: boolean) => void) {
   }
 }
 
-function resetPagination() {
+async function resetPagination() {
   hasMore.value = true;
   store.blogs = [];
+
+  const fetched = await store.fetchBlogs(limit, 0, false);
+  if (fetched.length < limit) {
+    hasMore.value = false;
+  }
+
   void nextTick(() => {
     if (infiniteScrollRef.value) {
       infiniteScrollRef.value.resume();
-      infiniteScrollRef.value.trigger();
     }
   });
 }
@@ -138,7 +143,7 @@ function resetPagination() {
 watch(
   () => [store.searchQuery, store.category],
   () => {
-    resetPagination();
+    void resetPagination();
   },
 );
 </script>
