@@ -22,8 +22,8 @@
           class="app-title row items-center cursor-pointer q-gutter-x-xs"
           @click="router.push('/blogs')"
         >
-          <q-avatar size="32px" class="bg-indigo-1 text-primary shadow-sm brand-logo-container">
-            <q-icon name="auto_awesome" size="18px" class="brand-logo-icon" />
+          <q-avatar size="32px" class="shadow-sm brand-logo-container">
+            <img src="/logo.png" alt="Postly" />
           </q-avatar>
           <span class="text-bold text-h6 font-brand logo-text">Postly</span>
         </div>
