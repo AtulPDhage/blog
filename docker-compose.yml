@@ -122,7 +122,7 @@ services:
     environment:
       - PORT=5001
       - DB_URL=postgres://postgres:mysecretdbpassword@postgres:5432/postgres?sslmode=disable
-      - REDIS_URL=redis:6379
+      - REDIS_URL=redis://redis:6379
       - Rabbitmq_Host=rabbitmq
       - Rabbitmq_Username=admin
       - Rabbitmq_Password=mysecretmqpassword
