@@ -8,3 +8,4 @@ docker compose up --build
 
 To stop the application, use the following command:
 docker compose down
+.
