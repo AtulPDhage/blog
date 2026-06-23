@@ -2,7 +2,7 @@
 
 This is the production-grade **Author Service** for the blog application, fully migrated from Express.js (TypeScript) to Golang. It is built using the standard Go directory layout and implements a decoupled **Service-Repository** pattern.
 
-## Directory Structure
+## Directory Structure 
 
 The repository is organized according to clean architecture guidelines to support long-term extensibility:
 
@@ -10,7 +10,7 @@ The repository is organized according to clean architecture guidelines to suppor
 author/
   ├── cmd/
   │   └── server/
-  │       └── main.go           # Application entry point (package main)
+  │       └── main.go           # Application entry point ( package main)
   ├── internal/
   │   ├── config/
   │   │   └── config.go         # Configuration parsing & fail-close check
