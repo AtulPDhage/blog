@@ -114,7 +114,7 @@ async function handleGoogleLogin(code: string) {
 
     Cookies.set('token', data.token, {
       expires: 5,
-      secure: true,
+      secure: window.location.protocol === 'https:',
       path: '/',
     });
 
