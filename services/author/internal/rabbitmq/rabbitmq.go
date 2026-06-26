@@ -17,6 +17,9 @@ var mqConn *amqp.Connection
 var mqChannel *amqp.Channel
 
 func ConnectRabbitMQ(host, username, password string) error {
+	host = strings.TrimPrefix(host, "amqps://")
+	host = strings.TrimPrefix(host, "amqp://")
+
 	protocol := "amqp"
 	if strings.Contains(host, ".amazonaws.com") {
 		protocol = "amqps"
