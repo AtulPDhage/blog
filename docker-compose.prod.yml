@@ -25,7 +25,7 @@ services:
     ports:
       - "5002:5002"
     env_file:
-      - ./envs/user-service.env
+      - .env
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5002/health"]
@@ -41,7 +41,7 @@ services:
     ports:
       - "5000:5000"
     env_file:
-      - ./envs/author-service.env
+      - .env
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/health"]
@@ -57,7 +57,7 @@ services:
     ports:
       - "5001:5001"
     env_file:
-      - ./envs/blog-service.env
+      - .env
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5001/health"]
@@ -66,6 +66,21 @@ services:
       retries: 3
     networks:
       - blog-network
+
+  # ── MongoDB Database ─────────────────────────
+  mongodb:
+    image: mongo:6-jammy
+    container_name: blog-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+volumes:
+  mongodb-data:
 
 networks:
   blog-network:
