@@ -36,7 +36,7 @@ func ConnectRedis(redisURL string) error {
 // Get retrieves a string key value from Redis
 func Get(ctx context.Context, key string) (string, error) {
 	if Client == nil {
-		return "", fmt.Errorf("Redis client is not initialized")
+		return "", fmt.Errorf("redis client is not initialized")
 	}
 	return Client.Get(ctx, key).Result()
 }
@@ -44,7 +44,7 @@ func Get(ctx context.Context, key string) (string, error) {
 // Set saves a key value pair to Redis with a specific expiration TTL
 func Set(ctx context.Context, key string, value string, ttl time.Duration) error {
 	if Client == nil {
-		return fmt.Errorf("Redis client is not initialized")
+		return fmt.Errorf("redis client is not initialized")
 	}
 	return Client.Set(ctx, key, value, ttl).Err()
 }
@@ -52,7 +52,7 @@ func Set(ctx context.Context, key string, value string, ttl time.Duration) error
 // InvalidateKeysByPattern deletes all keys matching a specific pattern (e.g. blogs:*)
 func InvalidateKeysByPattern(ctx context.Context, pattern string) (int, error) {
 	if Client == nil {
-		return 0, fmt.Errorf("Redis client is not initialized")
+		return 0, fmt.Errorf("redis client is not initialized")
 	}
 
 	keys, err := Client.Keys(ctx, pattern).Result()
