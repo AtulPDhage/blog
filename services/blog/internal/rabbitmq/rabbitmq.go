@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
@@ -14,11 +15,34 @@ var Channel *amqp.Channel
 
 // ConnectRabbitMQ opens a connection and channel to RabbitMQ
 func ConnectRabbitMQ(host, username, password string) error {
-	uri := fmt.Sprintf("amqp://%s:%s@%s:5672/",
-		url.QueryEscape(username),
-		url.QueryEscape(password),
-		host,
-	)
+	protocol := "amqp"
+	if strings.Contains(host, ".amazonaws.com") {
+		protocol = "amqps"
+	}
+
+	hasPort := strings.Contains(host, ":")
+	
+	var uri string
+	if hasPort {
+		uri = fmt.Sprintf("%s://%s:%s@%s/",
+			protocol,
+			url.QueryEscape(username),
+			url.QueryEscape(password),
+			host,
+		)
+	} else {
+		port := "5672"
+		if protocol == "amqps" {
+			port = "5671"
+		}
+		uri = fmt.Sprintf("%s://%s:%s@%s:%s/",
+			protocol,
+			url.QueryEscape(username),
+			url.QueryEscape(password),
+			host,
+			port,
+		)
+	}
 
 	var err error
 	Conn, err = amqp.Dial(uri)
