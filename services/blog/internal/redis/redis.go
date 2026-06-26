@@ -49,20 +49,30 @@ func Set(ctx context.Context, key string, value string, ttl time.Duration) error
 	return Client.Set(ctx, key, value, ttl).Err()
 }
 
-// InvalidateKeysByPattern deletes all keys matching a specific pattern (e.g. blogs:*)
+// InvalidateKeysByPattern deletes all keys matching a specific pattern (e.g. blogs:*) using non-blocking SCAN
 func InvalidateKeysByPattern(ctx context.Context, pattern string) (int, error) {
 	if Client == nil {
 		return 0, fmt.Errorf("redis client is not initialized")
 	}
 
-	keys, err := Client.Keys(ctx, pattern).Result()
-	if err != nil {
-		return 0, fmt.Errorf("failed to scan keys for pattern: %w", err)
+	var cursor uint64
+	var keys []string
+	for {
+		var batch []string
+		var err error
+		batch, cursor, err = Client.Scan(ctx, cursor, pattern, 100).Result()
+		if err != nil {
+			return 0, fmt.Errorf("failed to scan keys for pattern: %w", err)
+		}
+		keys = append(keys, batch...)
+		if cursor == 0 {
+			break
+		}
 	}
 
 	deletedCount := len(keys)
 	if deletedCount > 0 {
-		err = Client.Del(ctx, keys...).Err()
+		err := Client.Del(ctx, keys...).Err()
 		if err != nil {
 			return 0, fmt.Errorf("failed to delete invalidation keys: %w", err)
 		}
