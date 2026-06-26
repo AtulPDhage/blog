@@ -17,7 +17,10 @@ import (
 
 type contextKey string
 
-const userContextKey contextKey = "user"
+const (
+	userContextKey   contextKey = "user"
+	GeminiContextKey contextKey = "GeminiAPIKey"
+)
 
 // GetUserFromContext retrieves the authenticated user from the context
 func GetUserFromContext(ctx context.Context) (models.User, bool) {

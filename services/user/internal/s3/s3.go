@@ -31,33 +31,18 @@ func InitS3(accessKey, secretKey, region, bucket string) error {
 	s3Region = region
 	s3Endpoint = os.Getenv("AWS_ENDPOINT")
 
-	var cfg aws.Config
-	var err error
-
-	if s3Endpoint != "" {
-		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-			return aws.Endpoint{
-				URL:               s3Endpoint,
-				HostnameImmutable: true,
-			}, nil
-		})
-		cfg, err = config.LoadDefaultConfig(context.TODO(),
-			config.WithRegion(region),
-			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
-			config.WithEndpointResolverWithOptions(customResolver),
-		)
-	} else {
-		cfg, err = config.LoadDefaultConfig(context.TODO(),
-			config.WithRegion(region),
-			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
-		)
-	}
-
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(region),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to load AWS configuration: %w", err)
 	}
 
 	s3Client = s3.NewFromConfig(cfg, func(o *s3.Options) {
+		if s3Endpoint != "" {
+			o.BaseEndpoint = aws.String(s3Endpoint)
+		}
 		if s3Endpoint != "" || os.Getenv("AWS_S3_FORCE_PATH_STYLE") == "true" {
 			o.UsePathStyle = true
 		}
