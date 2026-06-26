@@ -86,7 +86,7 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("DB_URL environment variable is required")
 	}
 	if cfg.RabbitMQHost == "" {
-		return nil, fmt.Errorf("Rabbitmq_Host environment variable is required")
+		return nil, fmt.Errorf("rabbitmq_Host environment variable is required")
 	}
 	if cfg.AWSAccessKeyID == "" || cfg.AWSSecretAccessKey == "" || cfg.AWSRegion == "" || cfg.AWSS3Bucket == "" {
 		return nil, fmt.Errorf("AWS/S3 configuration environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, AWS_S3_BUCKET) are required")

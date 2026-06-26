@@ -55,7 +55,7 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("AWS S3 settings (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, AWS_S3_BUCKET) are required")
 	}
 	if cfg.GoogleClientID == "" || cfg.GoogleClientSecret == "" {
-		return nil, fmt.Errorf("Google OAuth credentials (Google_Client_Id, Google_client_Secret) are required")
+		return nil, fmt.Errorf("google OAuth credentials (Google_Client_Id, Google_client_Secret) are required")
 	}
 	if cfg.JWTSecret == "" {
 		return nil, fmt.Errorf("JWT_SECRET environment variable is required")
