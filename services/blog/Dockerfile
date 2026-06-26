@@ -18,6 +18,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o blog-service ./cmd/ser
 # Production runner image
 FROM alpine:3.19
 
+RUN apk add --no-cache ca-certificates
+
 WORKDIR /app
 
 # Add non-root application user for secure running

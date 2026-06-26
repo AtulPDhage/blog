@@ -15,13 +15,16 @@ var Channel *amqp.Channel
 
 // ConnectRabbitMQ opens a connection and channel to RabbitMQ
 func ConnectRabbitMQ(host, username, password string) error {
-	host = strings.TrimPrefix(host, "amqps://")
-	host = strings.TrimPrefix(host, "amqp://")
-
 	protocol := "amqp"
-	if strings.Contains(host, ".amazonaws.com") {
+	if strings.HasPrefix(host, "amqps://") ||
+		strings.Contains(host, ".amazonaws.com") ||
+		strings.Contains(host, ".on.aws") ||
+		strings.HasSuffix(host, ":5671") {
 		protocol = "amqps"
 	}
+
+	host = strings.TrimPrefix(host, "amqps://")
+	host = strings.TrimPrefix(host, "amqp://")
 
 	hasPort := strings.Contains(host, ":")
 	
