@@ -3,8 +3,9 @@ resource "aws_mq_broker" "rabbitmq" {
   broker_name = "${var.project_name}-rabbitmq"
 
   engine_type        = "RabbitMQ"
-  engine_version     = "3.10.8"
-  host_instance_type = "mq.t3.micro" # Lightweight managed node
+  engine_version     = "3.13"
+  auto_minor_version_upgrade = true
+  host_instance_type = "mq.m5.large" # Supported instance type for Amazon MQ RabbitMQ
   deployment_mode    = "SINGLE_INSTANCE"
 
   user {
