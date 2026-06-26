@@ -434,9 +434,3 @@ func (m *mockMultipartWriter) Close() error {
 	_, _ = io.WriteString(m.w, "\r\n--"+m.boundary+"--\r\n")
 	return nil
 }
-
-func ioReadAll(r io.Reader) ([]byte, error) {
-	var buf bytes.Buffer
-	_, err := buf.ReadFrom(r)
-	return buf.Bytes(), err
-}

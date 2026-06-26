@@ -72,7 +72,7 @@ func CallGemini(ctx context.Context, apiKey, model, prompt string) (string, erro
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Gemini API returned bad status code: %d", resp.StatusCode)
+		return "", fmt.Errorf("gemini API returned bad status code: %d", resp.StatusCode)
 	}
 
 	var respPayload GeminiResponse

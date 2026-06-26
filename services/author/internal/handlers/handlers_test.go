@@ -207,7 +207,7 @@ func TestAIHandlers(t *testing.T) {
 	defer func() { gemini.GeminiBaseURL = oldBaseURL }()
 
 	apiKey := "dummy-api-key"
-	ctx := context.WithValue(context.Background(), "GeminiAPIKey", apiKey)
+	ctx := context.WithValue(context.Background(), middleware.GeminiContextKey, apiKey)
 
 	h := NewBlogHandler(service.NewBlogService(nil))
 

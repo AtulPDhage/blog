@@ -227,11 +227,11 @@ func (h *BlogHandler) DeleteBlog(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+var cleanAIRegex = regexp.MustCompile(`\*\*|[\r\n]+|[*_\x60~]`)
+
 // CleanAISpanHelper cleans Markdown formatting symbols from Gemini responses
 func CleanAISpanHelper(text string) string {
-	// Replaces "**", "\r", "\n", "*", "_", "`", "~"
-	re := regexp.MustCompile(`\*\*|[\r\n]+|[*_\x60~]`)
-	cleaned := re.ReplaceAllString(text, "")
+	cleaned := cleanAIRegex.ReplaceAllString(text, "")
 	return strings.TrimSpace(cleaned)
 }
 
@@ -247,7 +247,7 @@ func (h *BlogHandler) AITitle(w http.ResponseWriter, r *http.Request) {
 	prompt := fmt.Sprintf(`Correct the grammar of the following blog title and return only the corrected title without any additional text, formatting, or symbols: "%s"`, req.Text)
 
 	// Fetch Gemini API Key
-	apiKey := r.Context().Value("GeminiAPIKey").(string)
+	apiKey := r.Context().Value(middleware.GeminiContextKey).(string)
 
 	resultText, err := gemini.CallGemini(r.Context(), apiKey, "gemini-2.5-flash", prompt)
 	if err != nil {
@@ -279,7 +279,7 @@ func (h *BlogHandler) AIDescription(w http.ResponseWriter, r *http.Request) {
 		prompt = fmt.Sprintf(`Fix the grammar in the following blog description and return only the corrected sentence. Do not add anything else: "%s"`, req.Description)
 	}
 
-	apiKey := r.Context().Value("GeminiAPIKey").(string)
+	apiKey := r.Context().Value(middleware.GeminiContextKey).(string)
 
 	resultText, err := gemini.CallGemini(r.Context(), apiKey, "gemini-2.5-flash", prompt)
 	if err != nil {
@@ -307,7 +307,7 @@ func (h *BlogHandler) AIBlog(w http.ResponseWriter, r *http.Request) {
 	// Refactored to use AIBlogSystemPrompt from queries constants
 	fullMessage := fmt.Sprintf("%s\n\n%s", db.AIBlogSystemPrompt, req.Blog)
 
-	apiKey := r.Context().Value("GeminiAPIKey").(string)
+	apiKey := r.Context().Value(middleware.GeminiContextKey).(string)
 
 	resultText, err := gemini.CallGemini(r.Context(), apiKey, "gemini-2.5-flash", fullMessage)
 	if err != nil {
