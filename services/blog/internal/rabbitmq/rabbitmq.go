@@ -15,6 +15,9 @@ var Channel *amqp.Channel
 
 // ConnectRabbitMQ opens a connection and channel to RabbitMQ
 func ConnectRabbitMQ(host, username, password string) error {
+	host = strings.TrimPrefix(host, "amqps://")
+	host = strings.TrimPrefix(host, "amqp://")
+
 	protocol := "amqp"
 	if strings.Contains(host, ".amazonaws.com") {
 		protocol = "amqps"
