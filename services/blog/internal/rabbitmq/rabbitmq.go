@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -28,25 +29,38 @@ func ConnectRabbitMQ(host, username, password string) error {
 
 	hasPort := strings.Contains(host, ":")
 	
+	// Detect vhost (CloudAMQP uses the username as the vhost)
+	vhost := ""
+	if strings.Contains(host, "cloudamqp.com") || strings.Contains(host, "lavemq.com") {
+		vhost = username
+	}
+	
+	// Support manual override
+	if customVhost := os.Getenv("Rabbitmq_Vhost"); customVhost != "" {
+		vhost = customVhost
+	}
+
 	var uri string
 	if hasPort {
-		uri = fmt.Sprintf("%s://%s:%s@%s/",
+		uri = fmt.Sprintf("%s://%s:%s@%s/%s",
 			protocol,
 			url.QueryEscape(username),
 			url.QueryEscape(password),
 			host,
+			url.PathEscape(vhost),
 		)
 	} else {
 		port := "5672"
 		if protocol == "amqps" {
 			port = "5671"
 		}
-		uri = fmt.Sprintf("%s://%s:%s@%s:%s/",
+		uri = fmt.Sprintf("%s://%s:%s@%s:%s/%s",
 			protocol,
 			url.QueryEscape(username),
 			url.QueryEscape(password),
 			host,
 			port,
+			url.PathEscape(vhost),
 		)
 	}
 
