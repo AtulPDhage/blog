@@ -26,6 +26,7 @@
             <img src="/logo.png" alt="Postly" />
           </q-avatar>
           <span class="text-bold text-h6 font-brand logo-text">Postly</span>
+          <q-badge color="primary" outline label="Vercel Preview" class="q-ml-xs text-weight-bold" style="font-size: 11px; padding: 4px 6px;" />
         </div>
 
         <!-- Desktop Navigation Links -->
