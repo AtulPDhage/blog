@@ -75,6 +75,27 @@ Used for asynchronous message queuing between services.
 ### E. AWS S3 (AWS Free Tier)
 Used by **User** and **Author** services for media uploads.
 - If you already have an AWS account, you can continue using the S3 bucket under the AWS Free Tier (5GB free for 12 months). Make sure to create an IAM user with S3 read/write policy, and copy the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
+- **CRITICAL S3 Permissions Setup**:
+  To allow anyone to view uploaded profile and blog pictures in their browser:
+  1. Go to the **AWS S3 Console** and click on your bucket (`postlyblog`).
+  2. Go to the **Permissions** tab.
+  3. Under **Block public access (bucket settings)**, click **Edit**, uncheck **Block *all* public access**, and click **Save changes** (type `confirm` to save).
+  4. Under **Bucket policy**, click **Edit** and paste the following policy (replace `postlyblog` with your actual bucket name if different):
+     ```json
+     {
+         "Version": "2012-10-17",
+         "Statement": [
+             {
+                 "Sid": "PublicReadGetObject",
+                 "Effect": "Allow",
+                 "Principal": "*",
+                 "Action": "s3:GetObject",
+                 "Resource": "arn:aws:s3:::postlyblog/*"
+             }
+         ]
+     }
+     ```
+  5. Click **Save changes**.
 
 ---
 
