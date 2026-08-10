@@ -17,7 +17,7 @@
   "dependencies": {
     "@quasar/extras": "^2.0.0",
     "axios": "^1.18.0",
-    "dompurify": "^3.4.11",
+    "dompurify": "^3.4.13",
     "jodit": "^4.12.27",
     "js-cookie": "^3.0.8",
     "pinia": "^3.0.1",
