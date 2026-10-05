@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@quasar/extras": "^2.0.0",
-    "axios": "^1.18.0",
+    "axios": "^1.20.0",
     "dompurify": "^3.4.13",
     "jodit": "^4.13.6",
     "js-cookie": "^3.0.8",
